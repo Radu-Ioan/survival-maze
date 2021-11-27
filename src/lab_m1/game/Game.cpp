@@ -4,23 +4,16 @@
 #include <string>
 #include <iostream>
 
+/* de la lab 2 */
+#include "core/engine.h"
+#include "utils/gl_utils.h"
+
 using namespace std;
 using namespace m1;
 
 
-/*
- *  To find out more about `FrameStart`, `Update`, `FrameEnd`
- *  and the order in which they are called, see `world.cpp`.
- */
-
-
 Game::Game()
 {
-	left = -5.f;
-	right = -left;
-	bottom = -4.f;
-	top = -bottom;
-	perspectiveProj = true;
 }
 
 
@@ -39,21 +32,21 @@ void Game::Init()
 	{
 		Mesh* mesh = new Mesh("box");
 		mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS,
-				"primitives"), "box.obj");
+			"primitives"), "box.obj");
 		meshes[mesh->GetMeshID()] = mesh;
 	}
 
 	{
 		Mesh* mesh = new Mesh("sphere");
 		mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS,
-				"primitives"), "sphere.obj");
+			"primitives"), "sphere.obj");
 		meshes[mesh->GetMeshID()] = mesh;
 	}
 
 	// [DONE]: After you implement the changing of the projection
 	// parameters, remove hardcodings of these parameters
-	projectionMatrix = glm::perspective(fov = RADIANS(60),
-			window->props.aspectRatio, zNear = 0.01f, zFar = 200.0f);
+	projectionMatrix = glm::perspective(RADIANS(60),
+			window->props.aspectRatio, 0.01f, 200.0f);
 }
 
 
@@ -74,57 +67,14 @@ void Game::Update(float deltaTimeSeconds)
 	{
 		glm::mat4 modelMatrix = glm::mat4(1);
 		modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 1, 0));
-		modelMatrix = glm::rotate(modelMatrix, RADIANS(45.0f), glm::vec3(0, 1, 0));
-
-		RenderMesh(meshes["box"], shaders["VertexNormal"], modelMatrix);
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(2, 0.5f, 0));
-		modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f),
-			glm::vec3(1, 0, 0));
-		RenderMesh(meshes["box"], shaders["VertexNormal"], modelMatrix);
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(-2, 0.5f, 0));
-		RenderMesh(meshes["box"], shaders["Simple"], modelMatrix);
-	}
-
-	// TODO(student): Draw more objects with different model matrices.
-	// Attention! The `RenderMesh()` function overrides the usual
-	// `RenderMesh()` that we've been using up until now. This new
-	// function uses the view matrix from the camera that you just
-	// implemented, and the local projection matrix.
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(1, 0.5f, 2));
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 3));
-		RenderMesh(meshes["box"], shaders["Simple"], modelMatrix);
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::rotate(modelMatrix, RADIANS(37.5f),
-			glm::vec3(-11, 1, 4));
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 2, 3));
-		RenderMesh(meshes["box"], shaders["Simple"], modelMatrix);
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(1, 0.5f, 2));
 		modelMatrix = glm::rotate(modelMatrix, RADIANS(45.0f),
-			glm::vec3(1, 1, 0));
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(3, 0, 0));
-		RenderMesh(meshes["box"], shaders["Simple"], modelMatrix);
-	}
+			glm::vec3(0, 1, 0));
 
+		RenderMesh(meshes["box"], shaders["VertexNormal"], modelMatrix);
+	}
 	// Render the camera target. This is useful for understanding where
 	// the rotation point is, when moving in third-person camera mode.
-	if (renderCameraTarget)
+	// if (renderCameraTarget)
 	{
 		glm::mat4 modelMatrix = glm::mat4(1);
 		modelMatrix = glm::translate(modelMatrix, camera->GetTargetPosition());
@@ -137,10 +87,10 @@ void Game::Update(float deltaTimeSeconds)
 void Game::FrameEnd()
 {
 	DrawCoordinateSystem(camera->GetViewMatrix(), projectionMatrix);
+	// DrawCoordinateSystem();
 }
 
-
-void Game::RenderMesh(Mesh * mesh, Shader * shader, const glm::mat4 & modelMatrix)
+void Game::RenderMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix)
 {
 	if (!mesh || !shader || !shader->program)
 		return;
@@ -156,13 +106,6 @@ void Game::RenderMesh(Mesh * mesh, Shader * shader, const glm::mat4 & modelMatri
 
 	mesh->Render();
 }
-
-
-/*
- *  These are callback functions. To find more about callbacks and
- *  how they behave, see `input_controller.h`.
- */
-
 
 void Game::OnInputUpdate(float deltaTime, int mods)
 {
@@ -201,36 +144,6 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 			camera->TranslateUpward(deltaTime * cameraSpeed);
 		}
 	}
-
-	// [DONE]: Change projection parameters. Declare any extra
-	// variables you might need in the class header. Inspect this file
-	// for any hardcoded projection arguments (can you find any?) and
-	// replace them with those extra variables.
-	float fovSpeed = 10.f;
-	if (window->KeyHold(GLFW_KEY_J)) {
-		// ++
-		if (perspectiveProj) {
-			fov += deltaTime * fovSpeed;
-			projectionMatrix = glm::perspective(fov, window->props.aspectRatio,
-				zNear, zFar);
-		} else {
-			left -= deltaTime * cameraSpeed;
-			right += deltaTime * cameraSpeed;
-			projectionMatrix = glm::ortho(left, right, bottom, top);
-		}
-	}
-	if (window->KeyHold(GLFW_KEY_K)) {
-		// --
-		if (perspectiveProj) {
-			fov -= deltaTime * fovSpeed;
-			projectionMatrix = glm::perspective(fov, window->props.aspectRatio,
-				zNear, zFar);
-		} else {
-			left += deltaTime * cameraSpeed;
-			right -= deltaTime * cameraSpeed;
-			projectionMatrix = glm::ortho(left, right, bottom, top);
-		}
-	}
 }
 
 
@@ -240,14 +153,6 @@ void Game::OnKeyPress(int key, int mods)
 	if (key == GLFW_KEY_T)
 	{
 		renderCameraTarget = !renderCameraTarget;
-	}
-	// [DONE]: Switch projections
-	if (key == GLFW_KEY_O) {
-		projectionMatrix = glm::ortho(left, right, bottom, top);
-	}
-	if (key == GLFW_KEY_P) {
-		projectionMatrix = glm::perspective(fov, window->props.aspectRatio,
-				zNear, zFar);
 	}
 }
 
@@ -272,8 +177,8 @@ void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
 			// [DONE]: Rotate the camera in first-person mode around
 			// OX and OY using `deltaX` and `deltaY`. Use the sensitivity
 			// variables for setting up the rotation speed.
-			camera->RotateFirstPerson_OX(deltaX * sensivityOX);
-			camera->RotateFirstPerson_OY(deltaY * sensivityOY);
+			camera->RotateFirstPerson_OX(-deltaY * sensivityOY);
+			camera->RotateFirstPerson_OY(-deltaX * sensivityOX);
 		}
 
 		if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL) {
@@ -281,8 +186,8 @@ void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
 			// [DONE]: Rotate the camera in third-person mode around
 			// OX and OY using `deltaX` and `deltaY`. Use the sensitivity
 			// variables for setting up the rotation speed.
-			camera->RotateThirdPerson_OX(deltaX * sensivityOX);
-			camera->RotateThirdPerson_OY(deltaY * sensivityOY);
+			camera->RotateThirdPerson_OX(-deltaY * sensivityOY);
+			camera->RotateThirdPerson_OY(-deltaX * sensivityOX);
 		}
 	}
 }

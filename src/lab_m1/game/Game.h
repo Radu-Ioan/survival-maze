@@ -1,8 +1,8 @@
 #pragma once
 
 #include "components/simple_scene.h"
-#include "lab_m1/game/lab_camera.h"
-
+#include "lab_m1/game/Camera.h"
+#include "lab_m1/game/colors.h"
 
 namespace m1
 {
@@ -40,10 +40,12 @@ namespace m1
 		glm::mat4 projectionMatrix;
 		bool renderCameraTarget;
 
-		// [DONE]: If you need any other class variables, define them here.
-		float fov, zNear, zFar;
-		float left, right, bottom, top;
-		// true for perspective
-		bool perspectiveProj;
+		/* constants */
+		Colors colors;
+
+		/* player variables */
+		glm::vec3 position;
+		Mesh *body, *leg, *hand, *head;
+
 	};
-}   // namespace m1
+}
