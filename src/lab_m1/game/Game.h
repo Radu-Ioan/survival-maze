@@ -3,6 +3,7 @@
 #include "components/simple_scene.h"
 #include "lab_m1/game/Camera.h"
 #include "lab_m1/game/colors.h"
+#include "lab_m1/game/factory.h"
 
 namespace m1
 {
@@ -38,7 +39,6 @@ namespace m1
 	protected:
 		implemented::Camera *camera;
 		glm::mat4 projectionMatrix;
-		bool renderCameraTarget;
 
 		/* constants */
 		Colors colors;

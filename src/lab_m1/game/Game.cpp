@@ -14,6 +14,7 @@ using namespace m1;
 
 Game::Game()
 {
+	body = factory::createCube("body", colors.YELLOW);
 }
 
 
@@ -24,8 +25,6 @@ Game::~Game()
 
 void Game::Init()
 {
-	renderCameraTarget = false;
-
 	camera = new implemented::Camera();
 	camera->Set(glm::vec3(0, 2, 3.5f), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
 
@@ -66,7 +65,8 @@ void Game::Update(float deltaTimeSeconds)
 {
 	{
 		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 1, 0));
+		// modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 1, 0));
+		modelMatrix = glm::translate(modelMatrix, glm::vec3(-5, 1, 0));
 		modelMatrix = glm::rotate(modelMatrix, RADIANS(45.0f),
 			glm::vec3(0, 1, 0));
 
@@ -74,12 +74,19 @@ void Game::Update(float deltaTimeSeconds)
 	}
 	// Render the camera target. This is useful for understanding where
 	// the rotation point is, when moving in third-person camera mode.
-	// if (renderCameraTarget)
 	{
 		glm::mat4 modelMatrix = glm::mat4(1);
 		modelMatrix = glm::translate(modelMatrix, camera->GetTargetPosition());
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f));
 		RenderMesh(meshes["sphere"], shaders["VertexNormal"], modelMatrix);
+	}
+
+	{
+		glm::mat4 modelMatrix = glm::mat4(1);
+		modelMatrix = glm::translate(modelMatrix, glm::vec3(2, 0, 1));
+		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.8f));
+		// RenderMesh(body, shaders["VertexNormal"], modelMatrix);
+		RenderMesh(body, shaders["VertexColor"], modelMatrix);
 	}
 }
 
@@ -150,10 +157,6 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 void Game::OnKeyPress(int key, int mods)
 {
 	// Add key press event
-	if (key == GLFW_KEY_T)
-	{
-		renderCameraTarget = !renderCameraTarget;
-	}
 }
 
 
@@ -173,7 +176,6 @@ void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
 		float sensivityOY = 0.001f;
 
 		if (window->GetSpecialKeyState() == 0) {
-			renderCameraTarget = false;
 			// [DONE]: Rotate the camera in first-person mode around
 			// OX and OY using `deltaX` and `deltaY`. Use the sensitivity
 			// variables for setting up the rotation speed.
@@ -182,7 +184,6 @@ void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
 		}
 
 		if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL) {
-			renderCameraTarget = true;
 			// [DONE]: Rotate the camera in third-person mode around
 			// OX and OY using `deltaX` and `deltaY`. Use the sensitivity
 			// variables for setting up the rotation speed.
