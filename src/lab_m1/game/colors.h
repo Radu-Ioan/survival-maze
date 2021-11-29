@@ -6,7 +6,7 @@ namespace m1
 	{
 		glm::vec3 BLACK, DARK_GREY, WHITE, RED,
 		GREEN, BLUE, PURPLE, YELLOW, DARK_RED,
-		LIGHT_BLUE, MAGENTA;
+		LIGHT_BLUE, MAGENTA, PUCE;
 		Colors() : BLACK(0.f, 0.f, 0.f),
 				DARK_GREY(0.1f, 0.1f, 0.1f),
 				WHITE(1.f, 1.f, 1.f),
@@ -17,7 +17,8 @@ namespace m1
 				YELLOW(1.f, 1.f, 0.f),
 				DARK_RED(0.6f, 0.0f, 0.0f),
 				LIGHT_BLUE(0.6f, 1.f, 1.f),
-				MAGENTA(1.f, 0.f, 1.f)
+				MAGENTA(1.f, 0.f, 1.f),
+				PUCE(169.f / 255, 92.f / 255, 104.f / 255)
 				{}
 	};
 }
