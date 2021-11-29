@@ -14,7 +14,30 @@ using namespace m1;
 
 Game::Game()
 {
+	plane = factory::createCube("plane", colors.BLUE);
 	body = factory::createCube("body", colors.YELLOW);
+	leg = factory::createCube("leg", colors.PUCE);
+	hand = factory::createCube("hand", colors.MAGENTA);
+	head = factory::createCube("head", colors.PUCE);
+
+	float shrink = 0.45f;
+	bodyScale = {0.5f, 0.5f, 0.1f};
+	bodyScale *= shrink;
+	bodyTranslate = {0.f, 0.55f, 0.f};
+
+	legScale = {0.1f, 0.25f, 0.2f};
+	legScale *= shrink;
+	leftLegTranslate = {-0.18f, 0.18f, 0.f};
+	rightLegTranslate = {0.18f, 0.18f, 0.f};
+
+	handScale = {0.1f, 0.35f, 0.2f};
+	handScale *= shrink;
+	leftHandTranslate = {-0.3f, 0.6f, 0.f};
+	rightHandTranslate = {0.3f, 0.6f, 0.f};
+
+	headScale = {0.2f, 0.2f, 0.2f};
+	headScale *= shrink;
+	headTranslate = {0.f, 0.9f, 0.f};
 }
 
 
@@ -53,6 +76,7 @@ void Game::FrameStart()
 {
 	// Clears the color buffer (using the previously set color) and depth buffer
 	glClearColor(0, 0, 0, 1);
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glm::ivec2 resolution = window->GetResolution();
@@ -63,7 +87,7 @@ void Game::FrameStart()
 
 void Game::Update(float deltaTimeSeconds)
 {
-	{
+	/*{
 		glm::mat4 modelMatrix = glm::mat4(1);
 		// modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 1, 0));
 		modelMatrix = glm::translate(modelMatrix, glm::vec3(-5, 1, 0));
@@ -87,7 +111,9 @@ void Game::Update(float deltaTimeSeconds)
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.8f));
 		// RenderMesh(body, shaders["VertexNormal"], modelMatrix);
 		RenderMesh(body, shaders["VertexColor"], modelMatrix);
-	}
+	}*/
+	DrawPlane(deltaTimeSeconds);
+	DrawPlayer(deltaTimeSeconds);
 }
 
 
@@ -95,6 +121,52 @@ void Game::FrameEnd()
 {
 	DrawCoordinateSystem(camera->GetViewMatrix(), projectionMatrix);
 	// DrawCoordinateSystem();
+}
+
+void Game::DrawPlayer(float deltaTimeSeconds)
+{
+	/* left leg */
+	glm::mat4 modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, leftLegTranslate);
+	modelMatrix = glm::scale(modelMatrix, legScale);
+	RenderMesh(leg, shaders["VertexColor"], modelMatrix);
+
+	/* right leg */
+	modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, rightLegTranslate);
+	modelMatrix = glm::scale(modelMatrix, legScale);
+	RenderMesh(leg, shaders["VertexColor"], modelMatrix);
+
+	/* body */
+	modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, bodyTranslate);
+	modelMatrix = glm::scale(modelMatrix, bodyScale);
+	RenderMesh(body, shaders["VertexColor"], modelMatrix);
+
+	/* left hand */
+	modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, leftHandTranslate);
+	modelMatrix = glm::scale(modelMatrix, handScale);
+	RenderMesh(hand, shaders["VertexColor"], modelMatrix);
+
+	/* right hand */
+	modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, rightHandTranslate);
+	modelMatrix = glm::scale(modelMatrix, handScale);
+	RenderMesh(hand, shaders["VertexColor"], modelMatrix);
+
+	/* head */
+	modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, headTranslate);
+	modelMatrix = glm::scale(modelMatrix, headScale);
+	RenderMesh(head, shaders["VertexColor"], modelMatrix);
+}
+
+void Game::DrawPlane(float deltaTimeSeconds)
+{
+	glm::mat4 modelMatrix = glm::mat4(1);
+	modelMatrix = glm::scale(modelMatrix, {40.f, 0.01f, 40.f});
+	// RenderMesh(plane, shaders["VertexColor"], modelMatrix);
 }
 
 void Game::RenderMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix)
@@ -117,6 +189,7 @@ void Game::RenderMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix)
 void Game::OnInputUpdate(float deltaTime, int mods)
 {
 	float cameraSpeed = 2.0f;
+
 	// move the camera only if MOUSE_RIGHT button is pressed
 	if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT))
 	{

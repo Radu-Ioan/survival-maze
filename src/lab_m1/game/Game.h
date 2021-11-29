@@ -20,8 +20,12 @@ namespace m1
 		void Update(float deltaTimeSeconds) override;
 		void FrameEnd() override;
 
+		void DrawPlane(float deltaTimeSeconds);
+		void DrawPlayer(float deltaTimeSeconds);
+
 		void RenderMesh(Mesh *mesh, Shader *shader,
 			const glm::mat4 &modelMatrix) override;
+
 
 		void OnInputUpdate(float deltaTime, int mods) override;
 		void OnKeyPress(int key, int mods) override;
@@ -43,9 +47,13 @@ namespace m1
 		/* constants */
 		Colors colors;
 
+		Mesh *plane;
 		/* player variables */
 		glm::vec3 position;
 		Mesh *body, *leg, *hand, *head;
-
+		glm::vec3 legScale, bodyScale, handScale, headScale;
+		glm::vec3 leftLegTranslate, rightLegTranslate;
+		glm::vec3 leftHandTranslate, rightHandTranslate;
+		glm::vec3 bodyTranslate, headTranslate;
 	};
 }
