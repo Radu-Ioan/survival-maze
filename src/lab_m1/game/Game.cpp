@@ -210,33 +210,8 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 	float cameraSpeed = 2.0f;
 	// move the camera only if MOUSE_RIGHT button is pressed
 	float epsilon = 0.01f;
-	if (window->KeyHold(GLFW_KEY_W)) {
-		float v = u + PI/2;
-		float dx = position.x;
-		float dz = position.z;
-		// if (sin(v) >= 0 && cos(v) <= epsilon) {
-		// 	position.x -= sin(v) * deltaTime * cameraSpeed;
-		// 	position.z -= cos(v) * deltaTime * cameraSpeed;
-		// } else if (sin(v) <= 0 && cos(v) <= epsilon) {
-		// 	position.x -= sin(v) * deltaTime * cameraSpeed;
-		// 	position.z += cos(v) * deltaTime * cameraSpeed;
-		// } else if (sin(v) <= 0 && cos(v) >= epsilon) {
-		// 	position.x += sin(v) * deltaTime * cameraSpeed;
-		// 	position.z += cos(v) * deltaTime * cameraSpeed;
-		// } else if (sin(v) >= 0 && cos(v) >= epsilon) {
-		// 	position.x += sin(v) * deltaTime * cameraSpeed;
-		// 	position.z -= cos(v) * deltaTime * cameraSpeed;
-		// }
-		position.x += sin(v) * deltaTime * cameraSpeed;
-		position.z += cos(v) * deltaTime * cameraSpeed;
-		dx = position.x - dx;
-		dz = position.z - dz;
-		camera->position.x += dx;
-		camera->position.z += dz;
-		camera->Set(camera->position, this->position, camera->up);
-	}
 
-	if (window->KeyHold(GLFW_KEY_S)) {
+	if (window->KeyHold(GLFW_KEY_W)) {
 		float v = u + PI/2;
 		float dx = position.x;
 		float dz = position.z;
@@ -253,8 +228,40 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 		// 	position.x -= sin(v) * deltaTime * cameraSpeed;
 		// 	position.z += cos(v) * deltaTime * cameraSpeed;
 		// }
-		position.x -= sin(v) * deltaTime * cameraSpeed;
-		position.z -= cos(v) * deltaTime * cameraSpeed;
+
+		// position.x -= sin(v) * deltaTime * cameraSpeed;
+		// position.z -= cos(v) * deltaTime * cameraSpeed;
+		position.x -= sin(u) * deltaTime * cameraSpeed;
+		position.z -= cos(u) * deltaTime * cameraSpeed;
+		dx = position.x - dx;
+		dz = position.z - dz;
+		camera->position.x += dx;
+		camera->position.z += dz;
+		camera->Set(camera->position, this->position, camera->up);
+	}
+
+	if (window->KeyHold(GLFW_KEY_S)) {
+		float v = u + PI/2;
+		float dx = position.x;
+		float dz = position.z;
+		// if (sin(v) >= 0 && cos(v) <= epsilon) {
+		// 	position.x -= sin(v) * deltaTime * cameraSpeed;
+		// 	position.z -= cos(v) * deltaTime * cameraSpeed;
+		// } else if (sin(v) <= 0 && cos(v) <= epsilon) {
+		// 	position.x -= sin(v) * deltaTime * cameraSpeed;
+		// 	position.z += cos(v) * deltaTime * cameraSpeed;
+		// } else if (sin(v) <= 0 && cos(v) >= epsilon) {
+		// 	position.x += sin(v) * deltaTime * cameraSpeed;
+		// 	position.z += cos(v) * deltaTime * cameraSpeed;
+		// } else if (sin(v) >= 0 && cos(v) >= epsilon) {
+		// 	position.x += sin(v) * deltaTime * cameraSpeed;
+		// 	position.z -= cos(v) * deltaTime * cameraSpeed;
+		// }
+		// position.x += sin(v) * deltaTime * cameraSpeed;
+		// position.z += cos(v) * deltaTime * cameraSpeed;
+
+		position.x += sin(u) * deltaTime * cameraSpeed;
+		position.z += cos(u) * deltaTime * cameraSpeed;
 		dx = position.x - dx;
 		dz = position.z - dz;
 		camera->position.x += dx;
@@ -265,19 +272,19 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 	
 	if (window->KeyHold(GLFW_KEY_A)) {
 		float du = u;
-		u -= deltaTime * cameraSpeed;
-		if (u > 2 * PI)
-			u -= 2 * PI;
+		u += deltaTime * cameraSpeed;
 		du = u - du;
+		if (u < -2 * PI)
+			u += 2 * PI;
 		camera->RotateThirdPerson_OY(du);
 	}
 
 	if (window->KeyHold(GLFW_KEY_D)) {
 		float du = u;
-		u += deltaTime * cameraSpeed;
-		if (u < -2 * PI)
-			u += 2 * PI;
+		u -= deltaTime * cameraSpeed;
 		du = u - du;
+		if (u > 2 * PI)
+			u -= 2 * PI;
 		camera->RotateThirdPerson_OY(du);
 	}
 
