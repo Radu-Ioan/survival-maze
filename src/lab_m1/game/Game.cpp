@@ -14,6 +14,9 @@ using namespace m1;
 
 Game::Game()
 {
+	position = {0.f, 0.5f, 0.f};
+	u = 0.f;
+
 	plane = factory::createCube("plane", colors.BLUE);
 	body = factory::createCube("body", colors.YELLOW);
 	leg = factory::createCube("leg", colors.PUCE);
@@ -49,7 +52,11 @@ Game::~Game()
 void Game::Init()
 {
 	camera = new implemented::Camera();
-	camera->Set(glm::vec3(0, 2, 3.5f), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
+	// camera->Set(glm::vec3(0, 2, 3.5f), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
+	glm::vec3 cameraPos = this->position;
+	cameraPos.y += 1.f;
+	cameraPos.z += 2.f;
+	camera->Set(cameraPos, this->position, {0.f, 1.f, 0.5f});
 
 	{
 		Mesh* mesh = new Mesh("box");
@@ -127,36 +134,48 @@ void Game::DrawPlayer(float deltaTimeSeconds)
 {
 	/* left leg */
 	glm::mat4 modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::rotate(modelMatrix, u, {0, 1, 0});
 	modelMatrix = glm::translate(modelMatrix, leftLegTranslate);
 	modelMatrix = glm::scale(modelMatrix, legScale);
 	RenderMesh(leg, shaders["VertexColor"], modelMatrix);
 
 	/* right leg */
 	modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::rotate(modelMatrix, u, {0, 1, 0});
 	modelMatrix = glm::translate(modelMatrix, rightLegTranslate);
 	modelMatrix = glm::scale(modelMatrix, legScale);
 	RenderMesh(leg, shaders["VertexColor"], modelMatrix);
 
 	/* body */
 	modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::rotate(modelMatrix, u, {0, 1, 0});
 	modelMatrix = glm::translate(modelMatrix, bodyTranslate);
 	modelMatrix = glm::scale(modelMatrix, bodyScale);
 	RenderMesh(body, shaders["VertexColor"], modelMatrix);
 
 	/* left hand */
 	modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::rotate(modelMatrix, u, {0, 1, 0});
 	modelMatrix = glm::translate(modelMatrix, leftHandTranslate);
 	modelMatrix = glm::scale(modelMatrix, handScale);
 	RenderMesh(hand, shaders["VertexColor"], modelMatrix);
 
 	/* right hand */
 	modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::rotate(modelMatrix, u, {0, 1, 0});
 	modelMatrix = glm::translate(modelMatrix, rightHandTranslate);
 	modelMatrix = glm::scale(modelMatrix, handScale);
 	RenderMesh(hand, shaders["VertexColor"], modelMatrix);
 
 	/* head */
 	modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::rotate(modelMatrix, u, {0, 1, 0});
 	modelMatrix = glm::translate(modelMatrix, headTranslate);
 	modelMatrix = glm::scale(modelMatrix, headScale);
 	RenderMesh(head, shaders["VertexColor"], modelMatrix);
@@ -189,40 +208,83 @@ void Game::RenderMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix)
 void Game::OnInputUpdate(float deltaTime, int mods)
 {
 	float cameraSpeed = 2.0f;
-
 	// move the camera only if MOUSE_RIGHT button is pressed
-	if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT))
-	{
-
-		if (window->KeyHold(GLFW_KEY_W)) {
-			// [DONE]: Translate the camera forward
-			camera->TranslateForward(deltaTime * cameraSpeed);
+	if (window->KeyHold(GLFW_KEY_W)) {
+		float v = u + PI/2;
+		float dx = position.x;
+		float dz = position.z;
+		if (sin(v) >= 0 && cos(v) >= 0) {
+			position.x += sin(v) * deltaTime * cameraSpeed;
+			position.z -= cos(v) * deltaTime * cameraSpeed;
+		} else if (sin(v) >= 0 && cos(v) <= 0) {
+			position.x -= sin(v) * deltaTime * cameraSpeed;
+			position.z -= cos(v) * deltaTime * cameraSpeed;
+		} else if (sin(v) <= 0 && cos(v) <= 0) {
+			position.x -= sin(v) * deltaTime * cameraSpeed;
+			position.z += cos(v) * deltaTime * cameraSpeed;
+		} else if (sin(v) <= 0 && cos(v) >= 0) {
+			position.x += sin(v) * deltaTime * cameraSpeed;
+			position.z += cos(v) * deltaTime * cameraSpeed;
 		}
+		dx = position.x - dx;
+		dz = position.z - dz;
+		camera->position.x += dx;
+		camera->position.z += dz;
+		camera->Set(camera->position, this->position, camera->up);
+	}
 
-		if (window->KeyHold(GLFW_KEY_A)) {
-			// [DONE]: Translate the camera to the left
-			camera->TranslateRight(-deltaTime * cameraSpeed);
+	if (window->KeyHold(GLFW_KEY_S)) {
+		float v = u + PI/2;
+		float dx = position.x;
+		float dz = position.z;
+		if (sin(v) >= 0 && cos(v) >= 0) {
+			position.x -= sin(v) * deltaTime * cameraSpeed;
+			position.z += cos(v) * deltaTime * cameraSpeed;
+		} else if (sin(v) >= 0 && cos(v) < 0) {
+			position.x += sin(v) * deltaTime * cameraSpeed;
+			position.z += cos(v) * deltaTime * cameraSpeed;
+		} else if (sin(v) <= 0 && cos(v) < 0) {
+			position.x += sin(v) * deltaTime * cameraSpeed;
+			position.z -= cos(v) * deltaTime * cameraSpeed;
+		} else if (sin(v) <= 0 && cos(v) >= 0) {
+			position.x -= sin(v) * deltaTime * cameraSpeed;
+			position.z -= cos(v) * deltaTime * cameraSpeed;
 		}
+		dx = position.x - dx;
+		dz = position.z - dz;
+		camera->position.x += dx;
+		camera->position.z += dz;
+		camera->Set(camera->position, this->position, camera->up);
+	}
 
-		if (window->KeyHold(GLFW_KEY_S)) {
-			// [DONE]: Translate the camera backward
-			camera->TranslateForward(-deltaTime * cameraSpeed);
-		}
+	
+	if (window->KeyHold(GLFW_KEY_A)) {
+		float du = u;
+		u += deltaTime * cameraSpeed;
+		if (u > 2 * PI)
+			u -= 2 * PI;
+		du = u - du;
+		// camera->RotateThirdPerson_OY((u + PI / 2) * deltaTime);
+		camera->RotateThirdPerson_OY(du * deltaTime);
+	}
 
-		if (window->KeyHold(GLFW_KEY_D)) {
-			// [DONE]: Translate the camera to the right
-			camera->TranslateRight(deltaTime * cameraSpeed);
-		}
+	if (window->KeyHold(GLFW_KEY_D)) {
+		float du = u;
+		u -= deltaTime * cameraSpeed;
+		if (u < -2 * PI)
+			u += 2 * PI;
+		du = u - du;
+		camera->RotateThirdPerson_OY(u * deltaTime);
+	}
 
-		if (window->KeyHold(GLFW_KEY_Q)) {
-			// [DONE]: Translate the camera downward
-			camera->TranslateUpward(-deltaTime * cameraSpeed);
-		}
+	if (window->KeyHold(GLFW_KEY_Q)) {
+		// [DONE]: Translate the camera downward
+		camera->TranslateUpward(-deltaTime * cameraSpeed);
+	}
 
-		if (window->KeyHold(GLFW_KEY_E)) {
-			// [DONE]: Translate the camera upward
-			camera->TranslateUpward(deltaTime * cameraSpeed);
-		}
+	if (window->KeyHold(GLFW_KEY_E)) {
+		// [DONE]: Translate the camera upward
+		camera->TranslateUpward(deltaTime * cameraSpeed);
 	}
 }
 
@@ -242,30 +304,42 @@ void Game::OnKeyRelease(int key, int mods)
 void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
 {
 	// Add mouse move event
+	float sensivityOX = 0.001f;
+	float sensivityOY = 0.001f;
 
-	if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT))
-	{
-		float sensivityOX = 0.001f;
-		float sensivityOY = 0.001f;
-
-		if (window->GetSpecialKeyState() == 0) {
-			// [DONE]: Rotate the camera in first-person mode around
-			// OX and OY using `deltaX` and `deltaY`. Use the sensitivity
-			// variables for setting up the rotation speed.
-			camera->RotateFirstPerson_OX(-deltaY * sensivityOY);
-			camera->RotateFirstPerson_OY(-deltaX * sensivityOX);
-		}
-
-		if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL) {
-			// [DONE]: Rotate the camera in third-person mode around
-			// OX and OY using `deltaX` and `deltaY`. Use the sensitivity
-			// variables for setting up the rotation speed.
-			camera->RotateThirdPerson_OX(-deltaY * sensivityOY);
-			camera->RotateThirdPerson_OY(-deltaX * sensivityOX);
-		}
+	if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
+		// [DONE]: Rotate the camera in third-person mode around
+		// OX and OY using `deltaX` and `deltaY`. Use the sensitivity
+		// variables for setting up the rotation speed.
+		camera->RotateThirdPerson_OX(-deltaY * sensivityOY);
+		camera->RotateThirdPerson_OY(-deltaX * sensivityOX);
 	}
 }
 
+void oldMouseMove()
+{
+	// if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT))
+	// {
+	// 	float sensivityOX = 0.001f;
+	// 	float sensivityOY = 0.001f;
+
+	// 	if (window->GetSpecialKeyState() == 0) {
+	// 		// [DONE]: Rotate the camera in first-person mode around
+	// 		// OX and OY using `deltaX` and `deltaY`. Use the sensitivity
+	// 		// variables for setting up the rotation speed.
+	// 		camera->RotateFirstPerson_OX(-deltaY * sensivityOY);
+	// 		camera->RotateFirstPerson_OY(-deltaX * sensivityOX);
+	// 	}
+
+	// 	if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL) {
+	// 		// [DONE]: Rotate the camera in third-person mode around
+	// 		// OX and OY using `deltaX` and `deltaY`. Use the sensitivity
+	// 		// variables for setting up the rotation speed.
+	// 		camera->RotateThirdPerson_OX(-deltaY * sensivityOY);
+	// 		camera->RotateThirdPerson_OY(-deltaX * sensivityOX);
+	// 	}
+	// }
+}
 
 void Game::OnMouseBtnPress(int mouseX, int mouseY, int button, int mods)
 {

@@ -46,10 +46,13 @@ namespace m1
 
 		/* constants */
 		Colors colors;
+		const float PI = 3.1415f;
 
 		Mesh *plane;
 		/* player variables */
 		glm::vec3 position;
+		// rotation angle;
+		float u;
 		Mesh *body, *leg, *hand, *head;
 		glm::vec3 legScale, bodyScale, handScale, headScale;
 		glm::vec3 leftLegTranslate, rightLegTranslate;
