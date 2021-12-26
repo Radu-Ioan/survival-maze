@@ -16,7 +16,7 @@ namespace implemented
 		std::pair<int, int> start, end;
 		std::vector<std::vector<std::pair<int, int>>> solutions;
 
-		Maze(int h, int w);
+		Maze(int h = 3, int w = 3);
 		~Maze();
 		void generate();
 		void generate_entrances();
