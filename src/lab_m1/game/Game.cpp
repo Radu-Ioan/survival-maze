@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
 
 /* de la lab 2 */
 #include "core/engine.h"
@@ -57,7 +58,14 @@ void Game::Init()
 {
 	maze.generate();
 	maze.generate_entrances();
-	this->position = {maze.start.first, 0.f, maze.start.second};
+	int deltax = 0, deltay = 0;
+	(maze.start.first == maze.W - 1) ? deltax-- : deltax++;
+	(maze.start.second == maze.H - 1) ? deltay-- : deltay++;
+
+	this->position = {2 * maze.start.first + deltax, 0.f,
+					  2 * maze.start.second + deltay};
+	std::cout << "first = " << maze.start.first << ", second = "
+			<< maze.start.second << std::endl;
 
 	camera = new implemented::Camera();
 	glm::vec3 cameraPos = this->position;
@@ -117,25 +125,26 @@ void Game::FrameEnd()
 
 void Game::DrawMaze(float deltaTimeSeconds)
 {
-	glm::vec3 damp = {0.5f, 0.5f, 0.5f};
+//  inainte se executa asta inainte de renderul din for
+//	glm::vec3 damp = {0.5f, 0.5f, 0.5f};
+//	rendMatrix = glm::translate(rendMatrix, damp);
+//	rendMatrix = glm::scale(rendMatrix, damp);
 	glm::vec3 translate = {1, 1, 1};
 
 	for (int row = 0; row < maze.H; row++) {
 		for (int col = 0; col < maze.W; col++) {
 			uint8_t field = maze.grid[row][col];
-			if (field) {
-				if (row != maze.start.second && col != maze.start.first
-							&& row != maze.end.second
-							&& col != maze.end.first) {
-					glm::mat4 rendMatrix = glm::mat4(1);
-					rendMatrix = glm::translate(rendMatrix,
-												{2 * col, 0.f, 2 * row});
-					rendMatrix = glm::translate(rendMatrix, translate);
-//					rendMatrix = glm::translate(rendMatrix, damp);
-//					rendMatrix = glm::scale(rendMatrix, damp);
-					RenderMesh(mazeObstacle, shaders["VertexColor"],
-							   rendMatrix);
-				}
+			if (field > 0) {
+				if ((row == maze.start.second && col == maze.start.first)
+						|| (row == maze.end.second && col == maze.end.first))
+					continue;
+
+				glm::mat4 rendMatrix = glm::mat4(1);
+				rendMatrix = glm::translate(rendMatrix,
+											{2 * col, 0.f, 2 * row});
+				rendMatrix = glm::translate(rendMatrix, translate);
+				RenderMesh(mazeObstacle, shaders["VertexColor"],
+						   rendMatrix);
 			}
 		}
 	}
@@ -250,16 +259,16 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 	}
 
 	/* voi scoate si if-urile astea */
-//	if (window->KeyHold(GLFW_KEY_Q)) {
-//		// [DONE]: Translate the camera downward
-//		camera->TranslateUpward(-deltaTime * cameraSpeed);
-//	}
-//
-//	if (window->KeyHold(GLFW_KEY_E)) {
-//		// [DONE]: Translate the camera upward
-//		camera->TranslateUpward(deltaTime * cameraSpeed);
-//		position = camera->GetTargetPosition();
-//	}
+	if (window->KeyHold(GLFW_KEY_Q)) {
+		// [DONE]: Translate the camera downward
+		camera->TranslateUpward(-deltaTime * cameraSpeed);
+	}
+
+	if (window->KeyHold(GLFW_KEY_E)) {
+		// [DONE]: Translate the camera upward
+		camera->TranslateUpward(deltaTime * cameraSpeed);
+		position = camera->GetTargetPosition();
+	}
 }
 
 void deprecatedMovement()
@@ -302,8 +311,7 @@ void Game::OnKeyRelease(int key, int mods)
 /**
  * Va fi scoasa aceasta functie.
  */
-void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
-{
+void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY) {
 	// Add mouse move event
 	float sensivityOX = 0.001f;
 	float sensivityOY = 0.001f;
