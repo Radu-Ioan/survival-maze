@@ -52,23 +52,21 @@ void Maze::generate()
 	}
 }
 
+
 void Maze::generate_entrances()
 {
 	int start_side = randrange(4);
 
-	if (start_side == 0) {
-		this->start = {0, randrange(1, W, 2)};
-		this->end = {H - 1, randrange(1, W, 2)};
-	} else if (start_side == 1) {
-		this->start = {H - 1, randrange(1, W, 2)};
+	if (start_side == 0)
 		this->end = {0, randrange(1, W, 2)};
-	} else if (start_side == 2) {
-		this->start = {randrange(1, H, 2), 0};
-		this->end = {randrange(1, H, 2), W - 1};
-	} else {
-		this->start = {randrange(1, H, 2), W - 1};
+	else if (start_side == 1)
+		this->end = {H - 1, randrange(1, W, 2)};
+	else if (start_side == 2)
 		this->end = {randrange(1, H, 2), 0};
-	}
+	else
+		this->end = {randrange(1, H, 2), W - 1};
+
+	this->start = {randrange(1, H, 2), randrange(1, W, 2)};
 
 	if (abs(this->start.first - this->end.first)
 	    + abs(this->start.second - this->end.second) < 2) {
