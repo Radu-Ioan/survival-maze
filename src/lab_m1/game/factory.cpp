@@ -51,6 +51,43 @@ Mesh *factory::createCube(const std::string &name, glm::vec3 color)
 	return CreateMesh(name, vertices, indices);
 }
 
+Mesh *factory::createCube(const std::string &name, glm::vec3 v1Color,
+						  glm::vec3 v2Color, glm::vec3 v3Color,
+						  glm::vec3 v4Color, glm::vec3 v5Color,
+						  glm::vec3 v6Color, glm::vec3 v7Color,
+						  glm::vec3 v8Color)
+{
+	std::vector<VertexFormat> vertices
+	{
+		VertexFormat(glm::vec3(-1, -1,  1), v1Color),
+		VertexFormat(glm::vec3(1, -1, 1), v2Color),
+		VertexFormat(glm::vec3(1, -1, -1), v3Color),
+		VertexFormat(glm::vec3(-1, -1, -1), v4Color),
+		VertexFormat(glm::vec3(-1, 1, 1), v5Color),
+		VertexFormat(glm::vec3(1, 1, 1), v6Color),
+		VertexFormat(glm::vec3(1, 1, -1), v7Color),
+		VertexFormat(glm::vec3(-1, 1, -1), v8Color),
+	};
+
+	std::vector<unsigned int> indices
+	{
+		0, 1, 2,
+		0, 2, 3,
+		0, 1, 5,
+		0, 5, 4,
+		1, 2, 6,
+		1, 6, 5,
+		4, 5, 6,
+		4, 6, 7,
+		3, 2, 6,
+		3, 6, 7,
+		0, 3, 7,
+		0, 7, 4
+	};
+
+	return CreateMesh(name, vertices, indices);
+}
+
 static Mesh *CreateMesh(const std::string &name,
 	const std::vector<VertexFormat> &vertices,
 	const std::vector<unsigned int> &indices)
