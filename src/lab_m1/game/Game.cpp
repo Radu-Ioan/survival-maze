@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <string>
-#include <iostream>
 
 /* de la lab 2 */
 #include "core/engine.h"
@@ -44,7 +43,9 @@ Game::Game()
 
 	mazeHeight = mazeWidth = 5;
 	maze = implemented::Maze(mazeHeight, mazeWidth);
-	mazeObstacle = factory::createCube("maze-cube", colors.PURPLE);
+	mazeObstacle = factory::createCube("maze-cube", colors.BLUE, colors.BLUE,
+	                                   colors.BLUE, colors.BLUE, colors.RED,
+	                                   colors.RED, colors.RED, colors.RED);
 }
 
 
@@ -54,12 +55,18 @@ Game::~Game()
 
 void Game::Init()
 {
+	maze.generate();
+	maze.generate_entrances();
+	this->position = {maze.start.first, 0.f, maze.start.second};
+
 	camera = new implemented::Camera();
 	glm::vec3 cameraPos = this->position;
-	cameraPos.y += 2.f;
-	cameraPos.z += 4.f;
+	float dy = 4.f;
+	float dz = 8.f;
+	cameraPos.y += dy;
+	cameraPos.z += dz;
 	camera->Set(cameraPos, this->position, {0.f, 1.f, 0.5f});
-	camera->distanceToTarget = (float) sqrt(2 * 2 + 4 * 4);
+	camera->distanceToTarget = (float) sqrt(dy * dy + dz * dz);
 
 	{
 		Mesh* mesh = new Mesh("box");
@@ -110,12 +117,26 @@ void Game::FrameEnd()
 
 void Game::DrawMaze(float deltaTimeSeconds)
 {
-	glm::mat4 modelMatrix = glm::mat4(1);
-	modelMatrix = glm::translate(modelMatrix, {0.5f, 0.5f, 0.5f});
+	glm::vec3 damp = {0.5f, 0.5f, 0.5f};
+	glm::vec3 translate = {1, 1, 1};
 
 	for (int row = 0; row < maze.H; row++) {
-		for (int cell = 0; cell < maze.W; cell++) {
-
+		for (int col = 0; col < maze.W; col++) {
+			uint8_t field = maze.grid[row][col];
+			if (field) {
+				if (row != maze.start.second && col != maze.start.first
+							&& row != maze.end.second
+							&& col != maze.end.first) {
+					glm::mat4 rendMatrix = glm::mat4(1);
+					rendMatrix = glm::translate(rendMatrix,
+												{2 * col, 0.f, 2 * row});
+					rendMatrix = glm::translate(rendMatrix, translate);
+//					rendMatrix = glm::translate(rendMatrix, damp);
+//					rendMatrix = glm::scale(rendMatrix, damp);
+					RenderMesh(mazeObstacle, shaders["VertexColor"],
+							   rendMatrix);
+				}
+			}
 		}
 	}
 }
