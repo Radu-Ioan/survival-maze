@@ -2,6 +2,7 @@
 
 #include "components/simple_scene.h"
 #include "lab_m1/game/Camera.h"
+#include "lab_m1/game/Maze.h"
 #include "lab_m1/game/colors.h"
 #include "lab_m1/game/factory.h"
 
@@ -20,6 +21,7 @@ namespace m1
 		void Update(float deltaTimeSeconds) override;
 		void FrameEnd() override;
 
+		void DrawMaze(float deltaTimeSeconds);
 		void DrawPlane(float deltaTimeSeconds);
 		void DrawPlayer(float deltaTimeSeconds);
 
@@ -58,5 +60,10 @@ namespace m1
 		glm::vec3 leftLegTranslate, rightLegTranslate;
 		glm::vec3 leftHandTranslate, rightHandTranslate;
 		glm::vec3 bodyTranslate, headTranslate;
+
+		/* maze attributes */
+		int mazeWidth, mazeHeight;
+		implemented::Maze maze;
+		Mesh *mazeObstacle;
 	};
 }

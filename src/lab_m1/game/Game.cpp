@@ -41,12 +41,15 @@ Game::Game()
 	headScale = {0.2f, 0.2f, 0.2f};
 	headScale *= shrink;
 	headTranslate = {0.f, 0.9f, 0.f};
+
+	mazeHeight = mazeWidth = 5;
+	maze = implemented::Maze(mazeHeight, mazeWidth);
+	mazeObstacle = factory::createCube("maze-cube", colors.PURPLE);
 }
 
 
 Game::~Game()
-{
-}
+= default;
 
 
 void Game::Init()
@@ -95,14 +98,26 @@ void Game::FrameStart()
 void Game::Update(float deltaTimeSeconds)
 {
 	DrawPlane(deltaTimeSeconds);
+	DrawMaze(deltaTimeSeconds);
 	DrawPlayer(deltaTimeSeconds);
 }
-
 
 void Game::FrameEnd()
 {
 	DrawCoordinateSystem(camera->GetViewMatrix(), projectionMatrix);
 	// DrawCoordinateSystem();
+}
+
+void Game::DrawMaze(float deltaTimeSeconds)
+{
+	glm::mat4 modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, {0.5f, 0.5f, 0.5f});
+
+	for (int row = 0; row < maze.H; row++) {
+		for (int cell = 0; cell < maze.W; cell++) {
+
+		}
+	}
 }
 
 void Game::DrawPlayer(float deltaTimeSeconds)
