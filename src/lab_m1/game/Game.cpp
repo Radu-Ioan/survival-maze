@@ -225,13 +225,82 @@ void Game::RenderMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix)
 	mesh->Render();
 }
 
+bool Game::allowMove(float deltaTime, float cameraSpeed, Direction direction)
+{
+	glm::vec3 playerForward{sin(u), 0, cos(u)};
+	playerForward = glm::normalize(playerForward);
+
+	glm::vec3 playerLeft{cos(u), 0, sin(u)};
+	playerLeft = glm::normalize(playerLeft);
+
+	float radius = 0.5f;
+
+	glm::vec3 dest;
+	glm::vec3 forwardMargin, leftMargin, rightMargin;
+
+	switch (direction) {
+		case FORWARD:
+			dest = this->position + playerForward * deltaTime * cameraSpeed;
+			break;
+		case LEFT:
+			dest = this->position + playerLeft * deltaTime * cameraSpeed;
+			break;
+		case BACK:
+			dest = this->position - playerForward * deltaTime * cameraSpeed;
+			break;
+		case RIGHT:
+			dest = this->position - playerLeft * deltaTime * cameraSpeed;
+			break;
+		default:
+			break;
+	}
+	return true;
+}
+
 void Game::OnInputUpdate(float deltaTime, int mods)
 {
 	float cameraSpeed = 2.0f;
 
+	glm::vec3 playerForward{sin(u), 0, cos(u)};
+	playerForward = glm::normalize(playerForward);
+
+	glm::vec3 playerLeft{cos(u), 0, sin(u)};
+	playerLeft = glm::normalize(playerLeft);
+
+	float radius = 0.5f;
+
 	if (window->KeyHold(GLFW_KEY_W)) {
-		camera->MoveForward(deltaTime * cameraSpeed);
-		position = camera->GetTargetPosition();
+		glm::vec3 forwardDest = this->position
+						+ playerForward * deltaTime * cameraSpeed;
+
+		glm::vec3 forwardMargin = forwardDest + playerForward * radius;
+		int forwardMarginX = (int) floor(forwardMargin.x);
+		int forwardMarginZ = (int) floor(forwardMargin.z);
+
+		glm::vec3 leftMargin = forwardDest + playerLeft * radius;
+		int leftMarginX = (int) floor(leftMargin.x);
+		int leftMarginZ = (int) floor(leftMargin.z);
+
+		glm::vec3 rightMargin = forwardDest - playerLeft * radius;
+		int rightMarginX = (int) floor(rightMargin.x);
+		int rightMarginZ = (int) floor(rightMargin.z);
+
+		int wall = 1;
+		bool notAllowed = (forwardMarginZ < 0 || forwardMarginX < 0
+				|| rightMarginZ < 0 || rightMarginX < 0
+				|| leftMarginZ < 0 || leftMarginX < 0
+				|| forwardMarginZ >= grid.H || forwardMarginX >= grid.W
+				|| rightMarginZ >= grid.H || rightMarginX >= grid.W
+				|| leftMarginZ >= grid.H || leftMarginX >= grid.W
+				|| maze.grid[forwardMarginZ / 2][forwardMarginX / 2] == wall
+				|| maze.grid[rightMarginZ / 2][rightMarginX / 2] == wall
+				|| maze.grid[leftMarginZ / 2][leftMarginX / 2] == wall);
+		bool allowed = !notAllowed;
+
+		if (allowed) {
+			camera->MoveForward(deltaTime * cameraSpeed);
+			position = camera->GetTargetPosition();
+		}
 	}
 
 	if (window->KeyHold(GLFW_KEY_S)) {
