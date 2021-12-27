@@ -21,4 +21,9 @@ namespace m1
 				PUCE(169.f / 255, 92.f / 255, 104.f / 255)
 				{}
 	};
+
+	enum Direction
+	{
+		FORWARD, LEFT, BACK, RIGHT
+	};
 }
