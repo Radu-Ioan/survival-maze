@@ -138,6 +138,9 @@ void Game::DrawMaze(float deltaTimeSeconds)
 				if ((row == maze.start.second && col == maze.start.first)
 						|| (row == maze.end.second && col == maze.end.first))
 					continue;
+//				if ((row == maze.start.second && col == maze.start.first)
+//						|| (row == maze.end.second && col == maze.end.first))
+//					continue;
 
 				glm::mat4 rendMatrix = glm::mat4(1);
 				rendMatrix = glm::translate(rendMatrix,

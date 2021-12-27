@@ -72,6 +72,8 @@ void Maze::generate_entrances()
 	    + abs(this->start.second - this->end.second) < 2) {
 		generate_entrances();
 	}
+	this->grid[this->start.second][this->start.first] = 0;
+	this->grid[this->end.second][this->end.first] = 0;
 }
 
 vector<pair<int, int>> Maze::find_neighbors(int r, int c,
