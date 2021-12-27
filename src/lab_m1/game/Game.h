@@ -3,7 +3,7 @@
 #include "components/simple_scene.h"
 #include "lab_m1/game/Camera.h"
 #include "lab_m1/game/Maze.h"
-#include "lab_m1/game/colors.h"
+#include "lab_m1/game/constants.h"
 #include "lab_m1/game/factory.h"
 
 namespace m1
@@ -24,6 +24,10 @@ namespace m1
 		void DrawMaze(float deltaTimeSeconds);
 		void DrawPlane(float deltaTimeSeconds);
 		void DrawPlayer(float deltaTimeSeconds);
+
+		/* for collisions */
+		bool allowMove(float deltaTime, float cameraSpeed,
+					   Direction direction);
 
 		void RenderMesh(Mesh *mesh, Shader *shader,
 			const glm::mat4 &modelMatrix) override;
@@ -53,7 +57,7 @@ namespace m1
 		Mesh *plane;
 		/* player variables */
 		glm::vec3 position;
-		// rotation angle;
+		// rotation angle
 		float u;
 		Mesh *body, *leg, *hand, *head;
 		glm::vec3 legScale, bodyScale, handScale, headScale;
