@@ -58,12 +58,9 @@ void Game::Init()
 {
 	maze.generate();
 	maze.generate_entrances();
-	int deltax = 0, deltay = 0;
-	(maze.start.first == maze.W - 1) ? deltax-- : deltax++;
-	(maze.start.second == maze.H - 1) ? deltay-- : deltay++;
 
-	this->position = {2 * maze.start.first + deltax, 0.f,
-					  2 * maze.start.second + deltay};
+	this->position = {2 * maze.start.first + 1, 0.f,
+					  2 * maze.start.second + 1};
 	std::cout << "first = " << maze.start.first << ", second = "
 			<< maze.start.second << std::endl;
 
@@ -72,7 +69,7 @@ void Game::Init()
 	float dy = 4.f;
 	float dz = 8.f;
 	cameraPos.y += dy;
-	cameraPos.z += dz;
+	cameraPos.z -= dz;
 	camera->Set(cameraPos, this->position, {0.f, 1.f, 0.5f});
 	camera->distanceToTarget = (float) sqrt(dy * dy + dz * dz);
 
