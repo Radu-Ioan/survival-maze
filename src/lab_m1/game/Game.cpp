@@ -264,10 +264,10 @@ bool Game::allowMove(float deltaTime, float cameraSpeed, Direction direction)
 	bool notAllowed = (forwardMarginZ < 0 || forwardMarginX < 0
 			|| rightMarginZ < 0 || rightMarginX < 0
 			|| leftMarginZ < 0 || leftMarginX < 0
-			|| forwardMarginZ >= maze.H
-			|| forwardMarginX >= maze.W
-			|| rightMarginZ >= maze.H || rightMarginX >= maze.W
-			|| leftMarginZ >= maze.H || leftMarginX >= maze.W
+			|| forwardMarginZ / 2 >= maze.H
+			|| forwardMarginX / 2 >= maze.W
+			|| rightMarginZ / 2 >= maze.H || rightMarginX / 2 >= maze.W
+			|| leftMarginZ / 2 >= maze.H || leftMarginX / 2 >= maze.W
 			|| maze.grid[forwardMarginZ / 2][forwardMarginX / 2] == wall
 			|| maze.grid[rightMarginZ / 2][rightMarginX / 2] == wall
 			|| maze.grid[leftMarginZ / 2][leftMarginX / 2] == wall);
