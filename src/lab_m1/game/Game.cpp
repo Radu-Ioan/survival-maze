@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <stdio.h>
 
 /* de la lab 2 */
 #include "core/engine.h"
@@ -11,6 +12,12 @@
 using namespace std;
 using namespace m1;
 
+// ca sa se blocheze, intoarce camera la 180 de grade fata de jucator si du-te
+// cu spatele intr-un perete;
+// oricum, ar fi mai elegant sa deplasezi jucatorul ca la inceput dupa
+// orientarea lui, nu dupa camera; la inceput am zis sa las dupa camera
+// pentru ca nu era labirintul si se vedea oricum, dar acum fiind obstacole,
+// tre sa muti cumva camera sa vezi
 
 Game::Game()
 {
@@ -42,7 +49,8 @@ Game::Game()
 	headScale *= shrink;
 	headTranslate = {0.f, 0.9f, 0.f};
 
-	mazeHeight = mazeWidth = 5;
+//	mazeHeight = mazeWidth = 5;
+	mazeHeight = mazeWidth = 10;
 	maze = implemented::Maze(mazeHeight, mazeWidth);
 	mazeObstacle = factory::createCube("maze-cube", colors.BLUE, colors.BLUE,
 	                                   colors.BLUE, colors.BLUE, colors.RED,
@@ -119,8 +127,8 @@ void Game::Update(float deltaTimeSeconds)
 
 void Game::FrameEnd()
 {
-	DrawCoordinateSystem(camera->GetViewMatrix(), projectionMatrix);
-	// DrawCoordinateSystem();
+//	DrawCoordinateSystem(camera->GetViewMatrix(), projectionMatrix);
+//	DrawCoordinateSystem();
 }
 
 void Game::DrawMaze(float deltaTimeSeconds)
@@ -129,7 +137,9 @@ void Game::DrawMaze(float deltaTimeSeconds)
 //	glm::vec3 damp = {0.5f, 0.5f, 0.5f};
 //	rendMatrix = glm::translate(rendMatrix, damp);
 //	rendMatrix = glm::scale(rendMatrix, damp);
-	glm::vec3 translate = {1, 1, 1};
+	glm::vec3 translate = {1, 0.3f, 1};
+
+	glm::vec3 shortScale = {1, 0.2, 1};
 
 	for (int row = 0; row < maze.H; row++) {
 		for (int col = 0; col < maze.W; col++) {
@@ -143,6 +153,10 @@ void Game::DrawMaze(float deltaTimeSeconds)
 				rendMatrix = glm::translate(rendMatrix,
 											{2 * col, 0.f, 2 * row});
 				rendMatrix = glm::translate(rendMatrix, translate);
+
+				// merge pentru ca pe y nu translatez cu nimic, si pe z si x unde translatez
+				// nu scalez
+				rendMatrix = glm::scale(rendMatrix, shortScale);
 				RenderMesh(mazeObstacle, shaders["VertexColor"],
 						   rendMatrix);
 			}
@@ -153,6 +167,7 @@ void Game::DrawMaze(float deltaTimeSeconds)
 void Game::DrawArrow(float deltaTimeSeconds)
 {
 	glm::mat4 modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, {0, -0.2f, 0});
 	modelMatrix = glm::translate(modelMatrix, position);
 	modelMatrix = glm::rotate(modelMatrix, u, {0, 1, 0});
 	modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
@@ -212,9 +227,10 @@ void Game::DrawPlayer(float deltaTimeSeconds)
 
 void Game::DrawPlane(float deltaTimeSeconds)
 {
-//	glm::mat4 modelMatrix = glm::mat4(1);
-//	modelMatrix = glm::scale(modelMatrix, {40.f, 0.01f, 40.f});
-//	RenderMesh(plane, shaders["VertexColor"], modelMatrix);
+	glm::mat4 modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, {maze.W, 0.f, maze.H});
+	modelMatrix = glm::scale(modelMatrix, {maze.W, 0.01f, maze.H});
+	RenderMesh(plane, shaders["VertexColor"], modelMatrix);
 }
 
 void Game::RenderMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix)
@@ -280,10 +296,37 @@ bool Game::allowMove(float deltaTime, float cameraSpeed, Direction direction)
 			|| forwardMarginX / 2 >= maze.W
 			|| rightMarginZ / 2 >= maze.H || rightMarginX / 2 >= maze.W
 			|| leftMarginZ / 2 >= maze.H || leftMarginX / 2 >= maze.W
-			|| maze.grid[forwardMarginZ / 2][forwardMarginX / 2] == wall
-			|| maze.grid[rightMarginZ / 2][rightMarginX / 2] == wall
-			|| maze.grid[leftMarginZ / 2][leftMarginX / 2] == wall);
+			|| maze.grid[forwardMarginZ / 2][forwardMarginX / 2] == wall);
+//			|| maze.grid[rightMarginZ / 2][rightMarginX / 2] == wall
+//			|| maze.grid[leftMarginZ / 2][leftMarginX / 2] == wall);
 	bool allowed = !notAllowed;
+
+	quick_time_buffer += deltaTime;
+	if (!(forwardMarginZ < 0 || forwardMarginX < 0
+		     || rightMarginZ < 0 || rightMarginX < 0
+		     || leftMarginZ < 0 || leftMarginX < 0
+		     || forwardMarginZ / 2 >= maze.H
+		     || forwardMarginX / 2 >= maze.W
+		     || rightMarginZ / 2 >= maze.H || rightMarginX / 2 >= maze.W
+		     || leftMarginZ / 2 >= maze.H || leftMarginX / 2 >= maze.W)
+		 && quick_time_buffer >= time_quick_limit) {
+		cout << "forwardMarginX = " << forwardMarginX << ", forwardMarginZ = "
+				<< forwardMarginZ << endl;
+		cout << "rightMarginX = " << rightMarginX << ", rightMarginZ = "
+				<< rightMarginZ << endl;
+		cout << "leftMarginX = " << leftMarginX << ", leftMarginZ = "
+				<< leftMarginZ << endl;
+
+		printf("maze.grid[%d][%d] = %d\n", forwardMarginZ / 2, forwardMarginX / 2,
+			   maze.grid[forwardMarginZ / 2][forwardMarginX / 2]);
+		printf("maze.grid[%d][%d] = %d\n", rightMarginZ / 2, rightMarginX / 2,
+		       maze.grid[rightMarginZ / 2][rightMarginX / 2]);
+		printf("maze.grid[%d][%d] = %d\n", leftMarginZ / 2, leftMarginX / 2,
+		       maze.grid[leftMarginZ / 2][leftMarginX / 2]);
+		cout << (allowed ? "true" : "false") << endl;
+		quick_time_buffer = 0;
+	}
+
 	return allowed;
 }
 
