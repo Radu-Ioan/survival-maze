@@ -15,6 +15,7 @@ namespace factory
 	                 glm::vec3 v4Color, glm::vec3 v5Color,
 	                 glm::vec3 v6Color, glm::vec3 v7Color,
 	                 glm::vec3 v8Color);
+	Mesh *createIndicator(const std::string &name, glm::vec3 color);
 }
 
 #endif

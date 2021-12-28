@@ -29,6 +29,9 @@ namespace m1
 		bool allowMove(float deltaTime, float cameraSpeed,
 					   Direction direction);
 
+		/* for debug */
+		void DrawArrow(float deltaTimeSeconds);
+
 		void RenderMesh(Mesh *mesh, Shader *shader,
 			const glm::mat4 &modelMatrix) override;
 
@@ -69,5 +72,11 @@ namespace m1
 		int mazeWidth, mazeHeight;
 		implemented::Maze maze;
 		Mesh *mazeObstacle;
+		// o pastram ca e buna, doar sa o micsoram un pic mai mult la final
+		Mesh *arrow;
+
+		// for a short debug on collisions
+		float quick_time_buffer = 0;
+		const float time_quick_limit = 2.f;
 	};
 }

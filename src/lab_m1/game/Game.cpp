@@ -47,6 +47,8 @@ Game::Game()
 	mazeObstacle = factory::createCube("maze-cube", colors.BLUE, colors.BLUE,
 	                                   colors.BLUE, colors.BLUE, colors.RED,
 	                                   colors.RED, colors.RED, colors.RED);
+
+	arrow = factory::createIndicator("arrow", colors.GREEN);
 }
 
 
@@ -112,6 +114,7 @@ void Game::Update(float deltaTimeSeconds)
 	DrawPlane(deltaTimeSeconds);
 	DrawMaze(deltaTimeSeconds);
 	DrawPlayer(deltaTimeSeconds);
+	DrawArrow(deltaTimeSeconds);
 }
 
 void Game::FrameEnd()
@@ -145,6 +148,15 @@ void Game::DrawMaze(float deltaTimeSeconds)
 			}
 		}
 	}
+}
+
+void Game::DrawArrow(float deltaTimeSeconds)
+{
+	glm::mat4 modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::rotate(modelMatrix, u, {0, 1, 0});
+	modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+	RenderMesh(arrow, shaders["VertexColor"], modelMatrix);
 }
 
 void Game::DrawPlayer(float deltaTimeSeconds)

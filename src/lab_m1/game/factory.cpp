@@ -88,6 +88,24 @@ Mesh *factory::createCube(const std::string &name, glm::vec3 v1Color,
 	return CreateMesh(name, vertices, indices);
 }
 
+Mesh *factory::createIndicator(const std::string &name, glm::vec3 color)
+{
+	// ca sa vezi cum e orientat jucatorul
+	std::vector<VertexFormat> vertices
+	{
+		VertexFormat(glm::vec3(1, 0.5f, -1), color),
+		VertexFormat(glm::vec3(-1, 0.5f, -1), color),
+		VertexFormat(glm::vec3(0, 0.5f, 2), color)
+	};
+
+	std::vector<unsigned int> indices
+	{
+		0, 1, 2
+	};
+
+	return CreateMesh(name, vertices, indices);
+}
+
 static Mesh *CreateMesh(const std::string &name,
 	const std::vector<VertexFormat> &vertices,
 	const std::vector<unsigned int> &indices)
