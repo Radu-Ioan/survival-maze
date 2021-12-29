@@ -145,10 +145,6 @@ void Game::DrawMaze(float deltaTimeSeconds)
 		for (int col = 0; col < maze.W; col++) {
 			uint8_t field = maze.grid[row][col];
 			if (field > 0) {
-//				if ((row == maze.start.second && col == maze.start.first)
-//						|| (row == maze.end.second && col == maze.end.first))
-//					continue;
-
 				glm::mat4 rendMatrix = glm::mat4(1);
 				rendMatrix = glm::translate(rendMatrix,
 											{2 * col, 0.f, 2 * row});
