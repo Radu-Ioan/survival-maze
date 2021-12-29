@@ -13,6 +13,7 @@ namespace implemented
 		int h, w;
 		int H, W;
 		std::vector<std::vector<uint8_t>> grid;
+		// first is for row, second is for col
 		std::pair<int, int> start, end;
 		std::vector<std::vector<std::pair<int, int>>> solutions;
 

@@ -49,14 +49,19 @@ Game::Game()
 	headScale *= shrink;
 	headTranslate = {0.f, 0.9f, 0.f};
 
-//	mazeHeight = mazeWidth = 5;
-	mazeHeight = mazeWidth = 10;
+	mazeHeight = mazeWidth = 5;
 	maze = implemented::Maze(mazeHeight, mazeWidth);
 	mazeObstacle = factory::createCube("maze-cube", colors.BLUE, colors.BLUE,
 	                                   colors.BLUE, colors.BLUE, colors.RED,
 	                                   colors.RED, colors.RED, colors.RED);
 
 	arrow = factory::createIndicator("arrow", colors.GREEN);
+
+	bulletMesh = new Mesh("bulletMesh");
+	bulletMesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS,
+	                               "primitives"), "sphere.obj");
+	meshes[bulletMesh->GetMeshID()] = bulletMesh;
+	bulletScale = 0.5f;
 }
 
 
@@ -71,8 +76,6 @@ void Game::Init()
 
 	this->position = {2 * maze.start.first + 1, 0.f,
 					  2 * maze.start.second + 1};
-	std::cout << "first = " << maze.start.first << ", second = "
-			<< maze.start.second << std::endl;
 
 	camera = new implemented::Camera();
 	glm::vec3 cameraPos = this->position;
@@ -90,13 +93,6 @@ void Game::Init()
 		meshes[mesh->GetMeshID()] = mesh;
 	}
 
-	{
-		Mesh* mesh = new Mesh("sphere");
-		mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS,
-			"primitives"), "sphere.obj");
-		meshes[mesh->GetMeshID()] = mesh;
-	}
-
 	// [DONE]: After you implement the changing of the projection
 	// parameters, remove hardcodings of these parameters
 	projectionMatrix = glm::perspective(RADIANS(60),
@@ -107,7 +103,8 @@ void Game::Init()
 void Game::FrameStart()
 {
 	// Clears the color buffer (using the previously set color) and depth buffer
-	glClearColor(0, 0, 0, 1);
+//	glClearColor(0, 0, 0, 1);
+	glClearColor(1, 1, 1, 1);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -121,8 +118,10 @@ void Game::Update(float deltaTimeSeconds)
 {
 	DrawPlane(deltaTimeSeconds);
 	DrawMaze(deltaTimeSeconds);
+	DrawEnemies(deltaTimeSeconds);
 	DrawPlayer(deltaTimeSeconds);
 	DrawArrow(deltaTimeSeconds);
+	DrawBullets(deltaTimeSeconds);
 }
 
 void Game::FrameEnd()
@@ -131,15 +130,18 @@ void Game::FrameEnd()
 //	DrawCoordinateSystem();
 }
 
+void Game::DrawPlane(float deltaTimeSeconds)
+{
+	glm::mat4 modelMatrix = glm::mat4(1);
+	modelMatrix = glm::translate(modelMatrix, {maze.W, 0.f, maze.H});
+	modelMatrix = glm::scale(modelMatrix, {maze.W, 0.01f, maze.H});
+	RenderMesh(plane, shaders["VertexColor"], modelMatrix);
+}
+
 void Game::DrawMaze(float deltaTimeSeconds)
 {
-//  inainte se executa asta inainte de renderul din for
-//	glm::vec3 damp = {0.5f, 0.5f, 0.5f};
-//	rendMatrix = glm::translate(rendMatrix, damp);
-//	rendMatrix = glm::scale(rendMatrix, damp);
-	glm::vec3 translate = {1, 0.3f, 1};
-
-	glm::vec3 shortScale = {1, 0.2, 1};
+	glm::vec3 translator = {1, 0.3f, 1};
+	glm::vec3 scaling = {1, 0.2f, 1};
 
 	for (int row = 0; row < maze.H; row++) {
 		for (int col = 0; col < maze.W; col++) {
@@ -148,26 +150,24 @@ void Game::DrawMaze(float deltaTimeSeconds)
 				glm::mat4 rendMatrix = glm::mat4(1);
 				rendMatrix = glm::translate(rendMatrix,
 											{2 * col, 0.f, 2 * row});
-				rendMatrix = glm::translate(rendMatrix, translate);
+				rendMatrix = glm::translate(rendMatrix, translator);
 
-				// merge pentru ca pe y nu translatez cu nimic, si pe z si x unde translatez
-				// nu scalez
-				rendMatrix = glm::scale(rendMatrix, shortScale);
+				// it works because on OY I don't translate anything,
+				// and on OZ and OX I don't scale
+				rendMatrix = glm::scale(rendMatrix, scaling);
 				RenderMesh(mazeObstacle, shaders["VertexColor"],
 						   rendMatrix);
+			} else if (!(row == maze.start.first && col == maze.start.second)
+					&& !(row == maze.end.first && col == maze.end.second)) {
+				emptyCells.push_back({row, col});
 			}
 		}
 	}
 }
 
-void Game::DrawArrow(float deltaTimeSeconds)
+void Game::DrawEnemies(float deltaTimeSeconds)
 {
-	glm::mat4 modelMatrix = glm::mat4(1);
-	modelMatrix = glm::translate(modelMatrix, {0, -0.2f, 0});
-	modelMatrix = glm::translate(modelMatrix, position);
-	modelMatrix = glm::rotate(modelMatrix, u, {0, 1, 0});
-	modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
-	RenderMesh(arrow, shaders["VertexColor"], modelMatrix);
+
 }
 
 void Game::DrawPlayer(float deltaTimeSeconds)
@@ -221,12 +221,37 @@ void Game::DrawPlayer(float deltaTimeSeconds)
 	RenderMesh(head, shaders["VertexColor"], modelMatrix);
 }
 
-void Game::DrawPlane(float deltaTimeSeconds)
+void Game::DrawArrow(float deltaTimeSeconds)
 {
 	glm::mat4 modelMatrix = glm::mat4(1);
-	modelMatrix = glm::translate(modelMatrix, {maze.W, 0.f, maze.H});
-	modelMatrix = glm::scale(modelMatrix, {maze.W, 0.01f, maze.H});
-	RenderMesh(plane, shaders["VertexColor"], modelMatrix);
+	modelMatrix = glm::translate(modelMatrix, {0, -0.2f, 0});
+	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::rotate(modelMatrix, u, {0, 1, 0});
+	modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+	RenderMesh(arrow, shaders["VertexColor"], modelMatrix);
+}
+
+void Game::DrawBullets(float deltaTimeSeconds)
+{
+	float speed = 4;
+	list<DynamicData>::iterator it = bullets.begin();
+
+	while (it != bullets.end()) {
+		auto &bullet = *it;
+		bullet.pos += bullet.dir * speed * deltaTimeSeconds;
+		int marginX = ((int) floor(bullet.pos.x)) / 2;
+		int marginZ = ((int) floor(bullet.pos.z)) / 2;
+		if (marginX >= 0 && marginX < maze.W && marginZ >= 0
+				&& marginZ < maze.H && maze.grid[marginZ][marginX]) {
+			it = bullets.erase(it);
+		} else {
+			glm::mat4 modelMatrix = glm::mat4(1);
+			modelMatrix = glm::translate(modelMatrix, bullet.pos);
+			modelMatrix = glm::scale(modelMatrix, glm::vec3(bulletScale));
+			RenderMesh(bulletMesh, shaders["VertexColor"], modelMatrix);
+			it++;
+		}
+	}
 }
 
 void Game::RenderMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix)
@@ -251,74 +276,75 @@ bool Game::allowMove(float deltaTime, float cameraSpeed, Direction direction)
 	glm::vec3 playerForward{sin(u), 0, cos(u)};
 	playerForward = glm::normalize(playerForward);
 
-	glm::vec3 playerLeft{cos(u), 0, sin(u)};
-	playerLeft = glm::normalize(playerLeft);
-
 	float radius = 0.3f;
-
+	// the next position of the player based on the direction given;
+	// we check then if this new position makes a collision with a wall
 	glm::vec3 dest;
-	glm::vec3 forwardMargin, leftMargin, rightMargin;
 
 	switch (direction)
 	{
 		case FORWARD:
 			dest = this->position + playerForward * deltaTime * cameraSpeed;
-			forwardMargin = dest + playerForward * radius;
-			leftMargin = dest + playerLeft * radius;
-			rightMargin = dest - playerLeft * radius;
 			break;
 		case BACK:
 			dest = this->position - playerForward * deltaTime * cameraSpeed;
-			forwardMargin = dest - playerForward * radius;
-			leftMargin = dest - playerLeft * radius;
-			rightMargin = dest + playerLeft * radius;
 			break;
 		default:
 			return false;
 	}
 
-	int forwardMarginX = (int) floor(forwardMargin.x);
-	int forwardMarginZ = (int) floor(forwardMargin.z);
-	int leftMarginX = (int) floor(leftMargin.x);
-	int leftMarginZ = (int) floor(leftMargin.z);
-	int rightMarginX = (int) floor(rightMargin.x);
-	int rightMarginZ = (int) floor(rightMargin.z);
+	glm::vec3 upMargin = dest + glm::vec3(0, 0, radius);
+	glm::vec3 leftMargin = dest + glm::vec3(radius, 0, 0);
+	glm::vec3 rightMargin = dest + glm::vec3(-radius, 0, 0);
+	glm::vec3 downMargin = dest + glm::vec3(0, 0, -radius);
+
+	int upMarginX = ((int) floor(upMargin.x)) / 2;
+	int upMarginZ = ((int) floor(upMargin.z)) / 2;
+	int leftMarginX = ((int) floor(leftMargin.x)) / 2;
+	int leftMarginZ = ((int) floor(leftMargin.z)) / 2;
+	int rightMarginX = ((int) floor(rightMargin.x)) / 2;
+	int rightMarginZ = ((int) floor(rightMargin.z)) / 2;
+	int downMarginX = ((int) floor(downMargin.x)) / 2;
+	int downMarginZ = ((int) floor(downMargin.z)) / 2;
 
 	int wall = 1;
-	bool notAllowed = (forwardMarginZ < 0 || forwardMarginX < 0
-			|| rightMarginZ < 0 || rightMarginX < 0
-			|| leftMarginZ < 0 || leftMarginX < 0
-			|| forwardMarginZ / 2 >= maze.H
-			|| forwardMarginX / 2 >= maze.W
-			|| rightMarginZ / 2 >= maze.H || rightMarginX / 2 >= maze.W
-			|| leftMarginZ / 2 >= maze.H || leftMarginX / 2 >= maze.W
-			|| maze.grid[forwardMarginZ / 2][forwardMarginX / 2] == wall);
-//			|| maze.grid[rightMarginZ / 2][rightMarginX / 2] == wall
-//			|| maze.grid[leftMarginZ / 2][leftMarginX / 2] == wall);
+	bool notAllowed = (upMarginZ < 0 || upMarginX < 0
+				|| rightMarginZ < 0 || rightMarginX < 0
+				|| leftMarginZ < 0 || leftMarginX < 0
+				|| downMarginZ < 0 || downMarginX < 0
+				|| upMarginZ >= maze.H || upMarginX >= maze.W
+				|| rightMarginZ >= maze.H || rightMarginX >= maze.W
+				|| leftMarginZ >= maze.H || leftMarginX >= maze.W
+				|| downMarginZ >= maze.H || downMarginX >= maze.W
+				|| maze.grid[upMarginZ][upMarginX] == wall
+				|| maze.grid[rightMarginZ][rightMarginX] == wall
+				|| maze.grid[leftMarginZ][leftMarginX] == wall
+				|| maze.grid[downMarginZ][downMarginX] == wall);
 	bool allowed = !notAllowed;
 
+	// here is some debug
 	quick_time_buffer += deltaTime;
-	if (!(forwardMarginZ < 0 || forwardMarginX < 0
-		     || rightMarginZ < 0 || rightMarginX < 0
-		     || leftMarginZ < 0 || leftMarginX < 0
-		     || forwardMarginZ / 2 >= maze.H
-		     || forwardMarginX / 2 >= maze.W
-		     || rightMarginZ / 2 >= maze.H || rightMarginX / 2 >= maze.W
-		     || leftMarginZ / 2 >= maze.H || leftMarginX / 2 >= maze.W)
+	if (!(upMarginZ < 0 || upMarginX < 0
+	      || rightMarginZ < 0 || rightMarginX < 0
+	      || leftMarginZ < 0 || leftMarginX < 0
+	      || upMarginZ >= maze.H
+	      || upMarginX >= maze.W
+	      || rightMarginZ >= maze.H || rightMarginX >= maze.W
+	      || leftMarginZ >= maze.H || leftMarginX >= maze.W)
 		 && quick_time_buffer >= time_quick_limit) {
-		cout << "forwardMarginX = " << forwardMarginX << ", forwardMarginZ = "
-				<< forwardMarginZ << endl;
+		cout << "upMarginX = " << upMarginX << ", upMarginZ = "
+		     << upMarginZ << endl;
 		cout << "rightMarginX = " << rightMarginX << ", rightMarginZ = "
 				<< rightMarginZ << endl;
 		cout << "leftMarginX = " << leftMarginX << ", leftMarginZ = "
 				<< leftMarginZ << endl;
 
-		printf("maze.grid[%d][%d] = %d\n", forwardMarginZ / 2, forwardMarginX / 2,
-			   maze.grid[forwardMarginZ / 2][forwardMarginX / 2]);
-		printf("maze.grid[%d][%d] = %d\n", rightMarginZ / 2, rightMarginX / 2,
-		       maze.grid[rightMarginZ / 2][rightMarginX / 2]);
-		printf("maze.grid[%d][%d] = %d\n", leftMarginZ / 2, leftMarginX / 2,
-		       maze.grid[leftMarginZ / 2][leftMarginX / 2]);
+		printf("maze.grid[%d][%d] = %d\n", upMarginZ, upMarginX,
+		       maze.grid[upMarginZ][upMarginX]);
+		printf("maze.grid[%d][%d] = %d\n", rightMarginZ, rightMarginX,
+		       maze.grid[rightMarginZ][rightMarginX]);
+		printf("maze.grid[%d][%d] = %d\n", leftMarginZ, leftMarginX,
+		       maze.grid[leftMarginZ][leftMarginX]);
 		cout << (allowed ? "true" : "false") << endl;
 		quick_time_buffer = 0;
 	}
@@ -330,43 +356,7 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 {
 	float cameraSpeed = 2.0f;
 
-//	glm::vec3 playerForward{sin(u), 0, cos(u)};
-//	playerForward = glm::normalize(playerForward);
-//
-//	glm::vec3 playerLeft{cos(u), 0, sin(u)};
-//	playerLeft = glm::normalize(playerLeft);
-//
-//	float radius = 0.5f;
-
 	if (window->KeyHold(GLFW_KEY_W)) {
-//		glm::vec3 forwardDest = this->position
-//						+ playerForward * deltaTime * cameraSpeed;
-//
-//		glm::vec3 forwardMargin = forwardDest + playerForward * radius;
-//		int forwardMarginX = (int) floor(forwardMargin.x);
-//		int forwardMarginZ = (int) floor(forwardMargin.z);
-//
-//		glm::vec3 leftMargin = forwardDest + playerLeft * radius;
-//		int leftMarginX = (int) floor(leftMargin.x);
-//		int leftMarginZ = (int) floor(leftMargin.z);
-//
-//		glm::vec3 rightMargin = forwardDest - playerLeft * radius;
-//		int rightMarginX = (int) floor(rightMargin.x);
-//		int rightMarginZ = (int) floor(rightMargin.z);
-//
-//		int wall = 1;
-//		bool notAllowed = (forwardMarginZ < 0 || forwardMarginX < 0
-//				|| rightMarginZ < 0 || rightMarginX < 0
-//				|| leftMarginZ < 0 || leftMarginX < 0
-//				|| forwardMarginZ >= maze.H
-//				|| forwardMarginX >= maze.W
-//				|| rightMarginZ >= maze.H || rightMarginX >= maze.W
-//				|| leftMarginZ >= maze.H || leftMarginX >= maze.W
-//				|| maze.grid[forwardMarginZ / 2][forwardMarginX / 2] == wall
-//				|| maze.grid[rightMarginZ / 2][rightMarginX / 2] == wall
-//				|| maze.grid[leftMarginZ / 2][leftMarginX / 2] == wall);
-//		bool allowed = !notAllowed;
-
 		if (allowMove(deltaTime, cameraSpeed, FORWARD)) {
 			camera->MoveForward(deltaTime * cameraSpeed);
 			position = camera->GetTargetPosition();
@@ -439,7 +429,21 @@ void deprecatedMovement()
 
 void Game::OnKeyPress(int key, int mods)
 {
-	// Add key press event
+	cout << "mods : " << mods << endl;
+
+	if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
+		if (key == GLFW_KEY_SPACE) {
+			auto dir = glm::vec3(0, 0, 1);
+			glm::vec4 buffer = glm::rotate(glm::mat4(1.f), u, {0, 1, 0})
+			                   * glm::vec4(dir, 1);
+			dir = {buffer.x, buffer.y, buffer.z};
+
+			float distanceFromPlayerAtLaunch = 0.2f;
+			glm::vec3 initPos = position + dir * distanceFromPlayerAtLaunch;
+			initPos.y = 0.5f;
+			bullets.push_front(DynamicData(initPos, dir, u));
+		}
+	}
 }
 
 
@@ -453,21 +457,33 @@ void Game::OnKeyRelease(int key, int mods)
  */
 void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY) {
 	// Add mouse move event
-	float sensivityOX = 0.001f;
-	float sensivityOY = 0.001f;
-
-	if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
-		// [DONE]: Rotate the camera in third-person mode around
-		// OX and OY using `deltaX` and `deltaY`. Use the sensitivity
-		// variables for setting up the rotation speed.
-		camera->RotateThirdPerson_OX(-deltaY * sensivityOY);
-		camera->RotateThirdPerson_OY(-deltaX * sensivityOX);
-	}
+//	float sensivityOX = 0.001f;
+//	float sensivityOY = 0.001f;
+//
+//	if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
+//		// [DONE]: Rotate the camera in third-person mode around
+//		// OX and OY using `deltaX` and `deltaY`. Use the sensitivity
+//		// variables for setting up the rotation speed.
+//		camera->RotateThirdPerson_OX(-deltaY * sensivityOY);
+//		camera->RotateThirdPerson_OY(-deltaX * sensivityOX);
+//	}
 }
 
 void Game::OnMouseBtnPress(int mouseX, int mouseY, int button, int mods)
 {
-	// Add mouse button press event
+	if (window->KeyHold(GLFW_MOUSE_BUTTON_RIGHT)) {
+		if (button == GLFW_MOUSE_BUTTON_LEFT) {
+			auto dir = glm::vec3(0, 0, 1);
+			glm::vec4 buffer = glm::rotate(glm::mat4(1.f), u, {0, 1, 0})
+			                   * glm::vec4(dir, 1);
+			dir = {buffer.x, buffer.y, buffer.z};
+
+			float distanceFromPlayerAtLaunch = 0.2f;
+			glm::vec3 initPos = position + dir * distanceFromPlayerAtLaunch;
+			initPos.y = 0.5f;
+			bullets.push_front(DynamicData(initPos, dir, u));
+		}
+	}
 }
 
 

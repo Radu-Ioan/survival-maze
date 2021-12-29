@@ -6,8 +6,22 @@
 #include "lab_m1/game/constants.h"
 #include "lab_m1/game/factory.h"
 
+#include <list>
+
 namespace m1
 {
+	struct DynamicData
+	{
+		DynamicData(glm::vec3 pos, glm::vec3 dir, float u)
+					: pos(pos), dir(dir), u(u) {}
+		// the position at a certain moment
+		glm::vec3 pos;
+		// the direction of movement
+		glm::vec3 dir;
+		// the rotation angle
+		float u;
+	};
+
 	class Game : public gfxc::SimpleScene
 	{
 	public:
@@ -21,16 +35,16 @@ namespace m1
 		void Update(float deltaTimeSeconds) override;
 		void FrameEnd() override;
 
-		void DrawMaze(float deltaTimeSeconds);
 		void DrawPlane(float deltaTimeSeconds);
+		void DrawMaze(float deltaTimeSeconds);
+		void DrawEnemies(float deltaTimeSeconds);
 		void DrawPlayer(float deltaTimeSeconds);
+		void DrawArrow(float deltaTimeSeconds);
+		void DrawBullets(float deltaTimeSeconds);
 
 		/* for collisions */
 		bool allowMove(float deltaTime, float cameraSpeed,
 					   Direction direction);
-
-		/* for debug */
-		void DrawArrow(float deltaTimeSeconds);
 
 		void RenderMesh(Mesh *mesh, Shader *shader,
 			const glm::mat4 &modelMatrix) override;
@@ -72,8 +86,18 @@ namespace m1
 		int mazeWidth, mazeHeight;
 		implemented::Maze maze;
 		Mesh *mazeObstacle;
-		// o pastram ca e buna, doar sa o micsoram un pic mai mult la final
 		Mesh *arrow;
+		// used to know where to emplace enemies
+		std::vector<std::pair<int, int>> emptyCells;
+
+		/* for enemies */
+		Mesh *enemy;
+		std::vector<DynamicData> enemies;
+
+		/* for bullets */
+		Mesh *bulletMesh;
+		float bulletScale;
+		std::list<DynamicData> bullets;
 
 		// for a short debug on collisions
 		float quick_time_buffer = 0;
