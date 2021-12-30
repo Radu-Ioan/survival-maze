@@ -1,4 +1,5 @@
 #include "lab_m1/game/Game.h"
+#include "lab_m1/game/transform2D.h"
 
 #include <vector>
 #include <string>
@@ -62,6 +63,11 @@ Game::Game()
 	                               "primitives"), "sphere.obj");
 	meshes[bulletMesh->GetMeshID()] = bulletMesh;
 	bulletScale = 0.5f;
+
+	logicSpace = LogicSpace(0, 0, 4, 4);
+	timeRemaining = 80.f;
+
+	meshes["0"] = factory::createDigit0(colors.DARK_RED);
 }
 
 
@@ -122,6 +128,7 @@ void Game::Update(float deltaTimeSeconds)
 	DrawPlayer(deltaTimeSeconds);
 	DrawArrow(deltaTimeSeconds);
 	DrawBullets(deltaTimeSeconds);
+	DrawTime(deltaTimeSeconds);
 }
 
 void Game::FrameEnd()
@@ -399,6 +406,88 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 		camera->TranslateUpward(deltaTime * cameraSpeed);
 		position = camera->GetTargetPosition();
 	}
+}
+
+void Game::DrawTime(float deltaTimeSeconds)
+{
+	glm::ivec2 resolution = window->GetResolution();
+
+	auto viewSpace = ViewportSpace(0, resolution.y - resolution.y / 8,
+								   resolution.x / 5, resolution.y / 16);
+	SetViewportArea(viewSpace, glm::vec3(0.5f), true);
+
+	auto visMatrix = glm::mat3(1);
+	visMatrix *= VisualizationTransf2DUnif(logicSpace, viewSpace);
+	auto modelMatrix = visMatrix * transform2D::Translate(0, 0);
+	RenderMesh2D(meshes["0"], shaders["VertexColor"], modelMatrix);
+
+	timeRemaining -= deltaTimeSeconds;
+}
+
+void Game::DrawLife(float deltaTimeSeconds)
+{
+	glm::ivec2 resolution = window->GetResolution();
+
+	auto viewSpace = ViewportSpace(0, resolution.y - resolution.y / 16,
+	                               resolution.x / 5, resolution.y / 16);
+	SetViewportArea(viewSpace, glm::vec3(0.3f), true);
+}
+
+void Game::SetViewportArea(const ViewportSpace &viewSpace,
+						   glm::vec3 colorColor, bool clear)
+{
+	glViewport(viewSpace.x, viewSpace.y, viewSpace.width, viewSpace.height);
+
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(viewSpace.x, viewSpace.y, viewSpace.width, viewSpace.height);
+
+	// Clears the color buffer (using the previously set color) and depth buffer
+	glClearColor(colorColor.r, colorColor.g, colorColor.b, 1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDisable(GL_SCISSOR_TEST);
+
+	GetSceneCamera()->SetOrthographic((float) viewSpace.x,
+									  (float) (viewSpace.x + viewSpace.width),
+									  (float) viewSpace.y,
+									  (float) (viewSpace.y + viewSpace.height),
+									  0.1f, 400);
+	GetSceneCamera()->Update();
+}
+
+glm::mat3 Game::VisualizationTransf2D(const LogicSpace &logicSpace,
+									  const ViewportSpace &viewSpace)
+{
+	float sx, sy, tx, ty;
+	sx = viewSpace.width / logicSpace.width;
+	sy = viewSpace.height / logicSpace.height;
+	tx = viewSpace.x - sx * logicSpace.x;
+	ty = viewSpace.y - sy * logicSpace.y;
+
+	return glm::transpose(glm::mat3(
+			sx, 0.0f, tx,
+			0.0f, sy, ty,
+			0.0f, 0.0f, 1.0f));
+}
+
+glm::mat3 Game::VisualizationTransf2DUnif(const LogicSpace &logicSpace,
+                                    const ViewportSpace &viewSpace)
+{
+	float sx, sy, tx, ty, smin;
+	sx = viewSpace.width / logicSpace.width;
+	sy = viewSpace.height / logicSpace.height;
+	if (sx < sy)
+		smin = sx;
+	else
+		smin = sy;
+	tx = viewSpace.x - smin * logicSpace.x
+			+ (viewSpace.width - smin * logicSpace.width) / 2;
+	ty = viewSpace.y - smin * logicSpace.y
+			+ (viewSpace.height - smin * logicSpace.height) / 2;
+
+	return glm::transpose(glm::mat3(
+			smin, 0.0f, tx,
+			0.0f, smin, ty,
+			0.0f, 0.0f, 1.0f));
 }
 
 void deprecatedMovement()

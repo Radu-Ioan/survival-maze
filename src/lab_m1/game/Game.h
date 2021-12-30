@@ -8,8 +8,31 @@
 
 #include <list>
 
+
 namespace m1
 {
+	struct ViewportSpace
+	{
+		ViewportSpace() : x(0), y(0), width(1), height(1) {}
+		ViewportSpace(int x, int y, int width, int height)
+				: x(x), y(y), width(width), height(height) {}
+		int x;
+		int y;
+		int width;
+		int height;
+	};
+
+	struct LogicSpace
+	{
+		LogicSpace() : x(0), y(0), width(1), height(1) {}
+		LogicSpace(float x, float y, float width, float height)
+				: x(x), y(y), width(width), height(height) {}
+		float x;
+		float y;
+		float width;
+		float height;
+	};
+
 	struct DynamicData
 	{
 		DynamicData(glm::vec3 pos, glm::vec3 dir, float u)
@@ -35,12 +58,24 @@ namespace m1
 		void Update(float deltaTimeSeconds) override;
 		void FrameEnd() override;
 
+
 		void DrawPlane(float deltaTimeSeconds);
 		void DrawMaze(float deltaTimeSeconds);
 		void DrawEnemies(float deltaTimeSeconds);
 		void DrawPlayer(float deltaTimeSeconds);
 		void DrawArrow(float deltaTimeSeconds);
 		void DrawBullets(float deltaTimeSeconds);
+		void DrawTime(float deltaTimeSeconds);
+		void DrawLife(float deltaTimeSeconds);
+
+		/* for time and life */
+		void SetViewportArea(const ViewportSpace &viewSpace,
+							 glm::vec3 colorColor = glm::vec3(0),
+							 bool clear = true);
+		glm::mat3 VisualizationTransf2D(const LogicSpace &logicSpace,
+		                           const ViewportSpace &viewSpace);
+		glm::mat3 VisualizationTransf2DUnif(const LogicSpace &logicSpace,
+											const ViewportSpace &viewSpace);
 
 		/* for collisions */
 		bool allowMove(float deltaTime, float cameraSpeed,
@@ -98,6 +133,10 @@ namespace m1
 		Mesh *bulletMesh;
 		float bulletScale;
 		std::list<DynamicData> bullets;
+
+		/* time and life variables */
+		float timeRemaining;
+		LogicSpace logicSpace;
 
 		// for a short debug on collisions
 		float quick_time_buffer = 0;

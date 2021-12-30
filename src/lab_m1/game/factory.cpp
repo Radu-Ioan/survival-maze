@@ -90,7 +90,6 @@ Mesh *factory::createCube(const std::string &name, glm::vec3 v1Color,
 
 Mesh *factory::createIndicator(const std::string &name, glm::vec3 color)
 {
-	// ca sa vezi cum e orientat jucatorul
 	std::vector<VertexFormat> vertices
 	{
 		VertexFormat(glm::vec3(1, 0.5f, -1), color),
@@ -105,6 +104,77 @@ Mesh *factory::createIndicator(const std::string &name, glm::vec3 color)
 
 	return CreateMesh(name, vertices, indices);
 }
+
+Mesh *factory::createDigit0(glm::vec3 color)
+{
+	std::vector<VertexFormat> vertices
+	{
+		VertexFormat(glm::vec3(0.f, 0.2f, 0), color),
+		VertexFormat(glm::vec3(0.2f, 0.f,0), color),
+		VertexFormat(glm::vec3(0.4f, 0.f, 0), color),
+		VertexFormat(glm::vec3(0.6f, 0.2f, 0), color),
+		VertexFormat(glm::vec3(0.6f, 1.f, 0), color),
+		VertexFormat(glm::vec3(0.4f, 1.2f, 0), color),
+		VertexFormat(glm::vec3(0.2f, 1.2f, 0), color),
+		VertexFormat(glm::vec3(0.f, 1.f, 0), color)
+	};
+
+	std::vector<unsigned int> indices
+	{
+		0, 1, 2, 3, 4, 5, 6, 7
+	};
+
+	Mesh *digit = new Mesh("0");
+	digit->SetDrawMode(GL_LINE_LOOP);
+	digit->InitFromData(vertices, indices);
+	return digit;
+}
+
+Mesh *factory::createDigit1(glm::vec3 color)
+{
+	return NULL;
+}
+
+Mesh *factory::createDigit2(glm::vec3 color)
+{
+	return NULL;
+}
+
+Mesh *factory::createDigit3(glm::vec3 color)
+{
+	return NULL;
+}
+
+Mesh *factory::createDigit4(glm::vec3 color)
+{
+	return NULL;
+}
+
+Mesh *factory::createDigit5(glm::vec3 color)
+{
+	return NULL;
+}
+
+Mesh *factory::createDigit6(glm::vec3 color)
+{
+	return NULL;
+}
+
+Mesh *factory::createDigit7(glm::vec3 color)
+{
+	return NULL;
+}
+
+Mesh *factory::createDigit8(glm::vec3 color)
+{
+	return NULL;
+}
+
+Mesh *factory::createDigit9(glm::vec3 color)
+{
+	return NULL;
+}
+
 
 static Mesh *CreateMesh(const std::string &name,
 	const std::vector<VertexFormat> &vertices,

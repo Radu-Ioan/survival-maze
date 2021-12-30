@@ -16,6 +16,17 @@ namespace factory
 	                 glm::vec3 v6Color, glm::vec3 v7Color,
 	                 glm::vec3 v8Color);
 	Mesh *createIndicator(const std::string &name, glm::vec3 color);
+
+	Mesh *createDigit0(glm::vec3 color);
+	Mesh *createDigit1(glm::vec3 color);
+	Mesh *createDigit2(glm::vec3 color);
+	Mesh *createDigit3(glm::vec3 color);
+	Mesh *createDigit4(glm::vec3 color);
+	Mesh *createDigit5(glm::vec3 color);
+	Mesh *createDigit6(glm::vec3 color);
+	Mesh *createDigit7(glm::vec3 color);
+	Mesh *createDigit8(glm::vec3 color);
+	Mesh *createDigit9(glm::vec3 color);
 }
 
 #endif
