@@ -7,7 +7,7 @@ using namespace implemented;
 using namespace std;
 
 Maze::Maze(int h, int w) : h(h), w(w), H(2 * h + 1), W(2 * w + 1),
-                           grid(H, vector<uint8_t>(W, 1))
+                           grid(H, vector<uint8_t>(W, WALL))
 {}
 
 Maze::~Maze()
@@ -19,7 +19,7 @@ void Maze::generate()
 	int current_row = randrange(1, H, 2);
 	int current_col = randrange(1, W, 2);
 
-	grid[current_row][current_col] = 0;
+	grid[current_row][current_col] = EMPTY_CELL;
 	auto neighbors = find_neighbors(current_row, current_col, grid, true);
 	int visited = 1;
 
@@ -30,7 +30,7 @@ void Maze::generate()
 		current_col = cell.second;
 
 		visited++;
-		grid[current_row][current_col] = 0;
+		grid[current_row][current_col] = EMPTY_CELL;
 
 		neighbors.erase(neighbors.begin() + nn);
 
@@ -38,7 +38,7 @@ void Maze::generate()
 		auto nearest_n0 = cell.first;
 		auto nearest_n1 = cell.second;
 		grid[(current_row + nearest_n0) / 2]
-			[(current_col + nearest_n1) / 2] = 0;
+			[(current_col + nearest_n1) / 2] = EMPTY_CELL;
 
 		auto unvisited = find_neighbors(current_row, current_col, grid,
 		                                true);
@@ -72,8 +72,8 @@ void Maze::generate_entrances()
 	    + abs(this->start.second - this->end.second) < 2) {
 		generate_entrances();
 	}
-	this->grid[this->start.second][this->start.first] = 0;
-	this->grid[this->end.second][this->end.first] = 0;
+	this->grid[this->start.second][this->start.first] = EMPTY_CELL;
+	this->grid[this->end.second][this->end.first] = EMPTY_CELL;
 }
 
 vector<pair<int, int>> Maze::find_neighbors(int r, int c,
