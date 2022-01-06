@@ -6,19 +6,12 @@
 #include <iostream>
 #include <stdio.h>
 
-/* de la lab 2 */
 #include "core/engine.h"
 #include "utils/gl_utils.h"
 
 using namespace std;
 using namespace m1;
 
-// ca sa se blocheze, intoarce camera la 180 de grade fata de jucator si du-te
-// cu spatele intr-un perete;
-// oricum, ar fi mai elegant sa deplasezi jucatorul ca la inceput dupa
-// orientarea lui, nu dupa camera; la inceput am zis sa las dupa camera
-// pentru ca nu era labirintul si se vedea oricum, dar acum fiind obstacole,
-// tre sa muti cumva camera sa vezi
 
 Game::Game()
 {
