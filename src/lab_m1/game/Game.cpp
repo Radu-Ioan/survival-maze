@@ -15,10 +15,39 @@ using namespace m1;
 
 Game::Game()
 {
+	InitPlayerAttributes();
+	InitEnemiesAttributes();
+	plane = factory::createCube("plane", colors.BLUE);
+
+	mazeHeight = mazeWidth = 5;
+	maze = implemented::Maze(mazeHeight, mazeWidth);
+	mazeObstacle = factory::createCube("maze-cube", colors.BLUE, colors.BLUE,
+	                                   colors.BLUE, colors.BLUE, colors.RED,
+	                                   colors.RED, colors.RED, colors.RED);
+
+	bulletMesh = new Mesh("bulletMesh");
+	bulletMesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS,
+	                               "primitives"), "sphere.obj");
+	meshes[bulletMesh->GetMeshID()] = bulletMesh;
+	bulletScale = 0.5f;
+
+	logicSpace = LogicSpace(0, 0, 4, 4);
+	timeRemaining = 80.f;
+
+	digit0 = factory::createDigit0(colors.DARK_RED);
+
+	firstCamera = false;
+}
+
+
+Game::~Game()
+= default;
+
+void Game::InitPlayerAttributes()
+{
 	position = {0.f, 0.0f, 0.f};
 	u = 0.f;
 
-	plane = factory::createCube("plane", colors.BLUE);
 	body = factory::createCube("body", colors.YELLOW);
 	leg = factory::createCube("leg", colors.PUCE);
 	hand = factory::createCube("hand", colors.MAGENTA);
@@ -43,30 +72,51 @@ Game::Game()
 	headScale *= shrink;
 	headTranslate = {0.f, 0.9f, 0.f};
 
-	mazeHeight = mazeWidth = 5;
-	maze = implemented::Maze(mazeHeight, mazeWidth);
-	mazeObstacle = factory::createCube("maze-cube", colors.BLUE, colors.BLUE,
-	                                   colors.BLUE, colors.BLUE, colors.RED,
-	                                   colors.RED, colors.RED, colors.RED);
-
 	arrow = factory::createIndicator("arrow", colors.GREEN);
-
-	bulletMesh = new Mesh("bulletMesh");
-	bulletMesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS,
-	                               "primitives"), "sphere.obj");
-	meshes[bulletMesh->GetMeshID()] = bulletMesh;
-	bulletScale = 0.5f;
-
-	logicSpace = LogicSpace(0, 0, 4, 4);
-	timeRemaining = 80.f;
-
-	meshes["0"] = factory::createDigit0(colors.DARK_RED);
 }
 
+void Game::InitEnemiesAttributes()
+{
+	enemyBodyMesh = factory::createCube("enemy-mesh", colors.DARK_RED);
+	enemyHeadMesh = factory::createSolidHexagon("enemy-haed-mesh",
+												colors.DARK_RED);
 
-Game::~Game()
-= default;
+	float shrink = 0.5f;
+	enemyBodyScale = {0.2f, 0.65f, 0.1f};
+	enemyBodyScale *= shrink;
+	enemyBodyTranslate = {0.4f, 0.65f / 2 + 0.05, 0.5f};
 
+	enemyLeftHandScale = {0.1f, 0.23f, 0.1f};
+	enemyLeftHandScale *= shrink;
+	enemyRightHandScale = enemyLeftHandScale;
+
+	enemyLeftHandTranslate = {0.05f + 0.1f, 0.53f, 0.5f};
+	enemyRightHandTranslate = {0.05f + 0.73f, 0.53f, 0.5f};
+
+	enemyHeadScale = {0.6f, 0.4f, 0.3f};
+	enemyHeadTranslate = {0.5f, 0.8f, 0.5f};
+
+	enemyAngle = 0.f;
+	enemyDeltaHeight = 0.f;
+	enemyMaxDeltaHeight = 0.7f;
+
+	// up
+	enemySense = true;
+	gameStart = true;
+}
+
+void Game::generateEnemies()
+{
+	int total = (int) emptyCells.size() / 20;
+	for (int i = 0; i < total; i++) {
+		int idx = maze.randrange(total);
+		int z = emptyCells[idx].first;
+		int x = emptyCells[idx].second;
+		enemies.push_back({x, z});
+		emptyCells.erase(emptyCells.begin() + idx);
+	}
+	gameStart = false;
+}
 
 void Game::Init()
 {
@@ -85,15 +135,6 @@ void Game::Init()
 	camera->Set(cameraPos, this->position, {0.f, 1.f, 0.5f});
 	camera->distanceToTarget = (float) sqrt(dy * dy + dz * dz);
 
-	{
-		Mesh* mesh = new Mesh("box");
-		mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS,
-			"primitives"), "box.obj");
-		meshes[mesh->GetMeshID()] = mesh;
-	}
-
-	// [DONE]: After you implement the changing of the projection
-	// parameters, remove hardcodings of these parameters
 	projectionMatrix = glm::perspective(RADIANS(60),
 			window->props.aspectRatio, 0.01f, 200.0f);
 }
@@ -101,8 +142,6 @@ void Game::Init()
 
 void Game::FrameStart()
 {
-	// Clears the color buffer (using the previously set color) and depth buffer
-//	glClearColor(0, 0, 0, 1);
 	glClearColor(1, 1, 1, 1);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -167,7 +206,30 @@ void Game::DrawMaze(float deltaTimeSeconds)
 
 void Game::DrawEnemies(float deltaTimeSeconds)
 {
+	if (gameStart)
+		generateEnemies();
 
+	for (auto &e : enemies) {
+		float dz = 2 * e.first + 0.5f;
+		float dx = 2 * e.second + 0.5f;
+		glm::mat4 modelMatrix = glm::mat4(1);
+		modelMatrix = glm::translate(modelMatrix,
+					glm::vec3(dx, enemyDeltaHeight, dz));
+		modelMatrix = glm::rotate(modelMatrix, enemyAngle, glm::vec3(0, 1, 0));
+		modelMatrix = glm::translate(modelMatrix, enemyBodyTranslate);
+		modelMatrix = glm::scale(modelMatrix, enemyBodyScale);
+		RenderMesh(enemyBodyMesh, shaders["VertexColor"], modelMatrix);
+	}
+
+	enemyAngle += deltaTimeSeconds;
+	if (enemyAngle >= 2 * PI)
+		enemyAngle -= 2 * PI;
+	enemyDeltaHeight += enemySense ? deltaTimeSeconds : -deltaTimeSeconds;
+
+	if (enemyDeltaHeight > enemyMaxDeltaHeight)
+		enemySense = false;
+	else if (enemyDeltaHeight <= 0)
+		enemySense = true;
 }
 
 void Game::DrawPlayer(float deltaTimeSeconds)
@@ -358,15 +420,24 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 
 	if (window->KeyHold(GLFW_KEY_W)) {
 		if (allowMove(deltaTime, cameraSpeed, FORWARD)) {
-			camera->MoveForward(deltaTime * cameraSpeed);
-			position = camera->GetTargetPosition();
+			if (firstCamera) {
+				// todo
+
+			} else {
+				camera->MoveForward(deltaTime * cameraSpeed);
+				position = camera->GetTargetPosition();
+			}
 		}
 	}
 
 	if (window->KeyHold(GLFW_KEY_S)) {
 		if (allowMove(deltaTime, cameraSpeed, BACK)) {
-			camera->MoveForward(-deltaTime * cameraSpeed);
-			position = camera->GetTargetPosition();
+			if (window->KeyHold(GLFW_MOUSE_BUTTON_RIGHT)) {
+				// todo
+			} else {
+				camera->MoveForward(-deltaTime * cameraSpeed);
+				position = camera->GetTargetPosition();
+			}
 		}
 	}
 
@@ -388,7 +459,7 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 		camera->RotateThirdPerson_OY(du);
 	}
 
-	/* voi scoate si if-urile astea */
+	/* voi scoate si if-urile astea, ele raman acum doar pentru debug */
 	if (window->KeyHold(GLFW_KEY_Q)) {
 		// [DONE]: Translate the camera downward
 		camera->TranslateUpward(-deltaTime * cameraSpeed);
@@ -412,7 +483,7 @@ void Game::DrawTime(float deltaTimeSeconds)
 	auto visMatrix = glm::mat3(1);
 	visMatrix *= VisualizationTransf2DUnif(logicSpace, viewSpace);
 	auto modelMatrix = visMatrix * transform2D::Translate(0, 0);
-	RenderMesh2D(meshes["0"], shaders["VertexColor"], modelMatrix);
+	RenderMesh2D(digit0, shaders["VertexColor"], modelMatrix);
 
 	timeRemaining -= deltaTimeSeconds;
 }

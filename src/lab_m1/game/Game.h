@@ -58,6 +58,9 @@ namespace m1
 		void Update(float deltaTimeSeconds) override;
 		void FrameEnd() override;
 
+		void InitPlayerAttributes();
+		void InitEnemiesAttributes();
+		void generateEnemies();
 
 		void DrawPlane(float deltaTimeSeconds);
 		void DrawMaze(float deltaTimeSeconds);
@@ -126,8 +129,19 @@ namespace m1
 		std::vector<std::pair<int, int>> emptyCells;
 
 		/* for enemies */
-		Mesh *enemy;
-		std::vector<DynamicData> enemies;
+		Mesh *enemyBodyMesh;
+		Mesh *enemyHeadMesh;
+		glm::vec3 enemyBodyScale, enemyBodyTranslate;
+		glm::vec3 enemyLeftHandScale, enemyLeftHandTranslate;
+		glm::vec3 enemyRightHandScale, enemyRightHandTranslate;
+		glm:: vec3 enemyHeadScale, enemyHeadTranslate;
+		std::vector<std::pair<int, int>> enemies;
+		float enemyAngle;
+		float enemyDeltaHeight, enemyMaxDeltaHeight;
+		// up or down
+		bool enemySense;
+		// for filling the enemy list at the beginning of the game
+		bool gameStart;
 
 		/* for bullets */
 		Mesh *bulletMesh;
@@ -137,6 +151,10 @@ namespace m1
 		/* time and life variables */
 		float timeRemaining;
 		LogicSpace logicSpace;
+		Mesh *digit0;
+
+		/* */
+		bool firstCamera;
 
 		// for a short debug on collisions
 		float quick_time_buffer = 0;
