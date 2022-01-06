@@ -107,9 +107,10 @@ void Game::InitEnemiesAttributes()
 
 void Game::generateEnemies()
 {
-	int total = (int) emptyCells.size() / 20;
+	// int total = (int) emptyCells.size() / 20;
+	int total = 10;
 	for (int i = 0; i < total; i++) {
-		int idx = maze.randrange(total);
+		int idx = maze.randrange((int) emptyCells.size());
 		int z = emptyCells[idx].first;
 		int x = emptyCells[idx].second;
 		enemies.push_back({x, z});
@@ -210,13 +211,13 @@ void Game::DrawEnemies(float deltaTimeSeconds)
 		generateEnemies();
 
 	for (auto &e : enemies) {
-		float dz = 2 * e.first + 0.5f;
-		float dx = 2 * e.second + 0.5f;
+		float dx = 2 * e.first + 0.5f;
+		float dz = 2 * e.second + 0.5f;
 		glm::mat4 modelMatrix = glm::mat4(1);
 		modelMatrix = glm::translate(modelMatrix,
 					glm::vec3(dx, enemyDeltaHeight, dz));
-		modelMatrix = glm::rotate(modelMatrix, enemyAngle, glm::vec3(0, 1, 0));
 		modelMatrix = glm::translate(modelMatrix, enemyBodyTranslate);
+		modelMatrix = glm::rotate(modelMatrix, enemyAngle, glm::vec3(0, 1, 0));
 		modelMatrix = glm::scale(modelMatrix, enemyBodyScale);
 		RenderMesh(enemyBodyMesh, shaders["VertexColor"], modelMatrix);
 	}
@@ -383,33 +384,6 @@ bool Game::allowMove(float deltaTime, float cameraSpeed, Direction direction)
 				|| maze.grid[leftMarginZ][leftMarginX] == wall
 				|| maze.grid[downMarginZ][downMarginX] == wall);
 	bool allowed = !notAllowed;
-
-	// here is some debug
-	quick_time_buffer += deltaTime;
-	if (!(upMarginZ < 0 || upMarginX < 0
-	      || rightMarginZ < 0 || rightMarginX < 0
-	      || leftMarginZ < 0 || leftMarginX < 0
-	      || upMarginZ >= maze.H
-	      || upMarginX >= maze.W
-	      || rightMarginZ >= maze.H || rightMarginX >= maze.W
-	      || leftMarginZ >= maze.H || leftMarginX >= maze.W)
-		 && quick_time_buffer >= time_quick_limit) {
-		cout << "upMarginX = " << upMarginX << ", upMarginZ = "
-		     << upMarginZ << endl;
-		cout << "rightMarginX = " << rightMarginX << ", rightMarginZ = "
-				<< rightMarginZ << endl;
-		cout << "leftMarginX = " << leftMarginX << ", leftMarginZ = "
-				<< leftMarginZ << endl;
-
-		printf("maze.grid[%d][%d] = %d\n", upMarginZ, upMarginX,
-		       maze.grid[upMarginZ][upMarginX]);
-		printf("maze.grid[%d][%d] = %d\n", rightMarginZ, rightMarginX,
-		       maze.grid[rightMarginZ][rightMarginX]);
-		printf("maze.grid[%d][%d] = %d\n", leftMarginZ, leftMarginX,
-		       maze.grid[leftMarginZ][leftMarginX]);
-		cout << (allowed ? "true" : "false") << endl;
-		quick_time_buffer = 0;
-	}
 
 	return allowed;
 }
@@ -582,8 +556,6 @@ void deprecatedMovement()
 
 void Game::OnKeyPress(int key, int mods)
 {
-	cout << "mods : " << mods << endl;
-
 	if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
 		if (key == GLFW_KEY_SPACE) {
 			auto dir = glm::vec3(0, 0, 1);
