@@ -105,6 +105,54 @@ Mesh *factory::createIndicator(const std::string &name, glm::vec3 color)
 	return CreateMesh(name, vertices, indices);
 }
 
+Mesh *factory::createSolidHexagon(const std::string &name, glm::vec3 color)
+{
+	std::vector<VertexFormat> vertices
+	{
+		VertexFormat(glm::vec3(-1, 0, 1), color),
+		VertexFormat(glm::vec3(-0.5f, -1, 1), color),
+		VertexFormat(glm::vec3(0.5f, -1, 1), color),
+		VertexFormat(glm::vec3(1, 0, 1), color),
+		VertexFormat(glm::vec3(0.5f, 1, 1), color),
+		VertexFormat(glm::vec3(-0.5f, 1, 1), color),
+
+		VertexFormat(glm::vec3(-1, 0, -1), color),
+		VertexFormat(glm::vec3(-0.5f, -1, -1), color),
+		VertexFormat(glm::vec3(0.5f, -1, -1), color),
+		VertexFormat(glm::vec3(1, 0, -1), color),
+		VertexFormat(glm::vec3(0.5f, 1, -1), color),
+		VertexFormat(glm::vec3(-0.5f, 1, -1), color),
+	};
+
+	std::vector<unsigned int> indices
+	{
+		0, 1, 2,
+		0, 2, 3,
+		0, 3, 4,
+		0, 4, 5,
+
+		0, 5, 11,
+		0, 11, 6,
+		0, 6, 7,
+		0, 7, 1,
+		4, 10, 11,
+		4, 11, 5,
+		4, 9, 3,
+		4, 10, 9,
+		2, 3, 9,
+		2, 9, 8,
+		2, 8, 7,
+		2, 7, 1,
+
+		6, 7, 8,
+		6, 8, 9,
+		6, 9, 10,
+		6, 10, 11,
+	};
+
+	return CreateMesh(name, vertices, indices);
+}
+
 Mesh *factory::createDigit0(glm::vec3 color)
 {
 	std::vector<VertexFormat> vertices
