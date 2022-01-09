@@ -20,8 +20,8 @@ Game::Game()
 
 	mazeHeight = mazeWidth = 5;
 	maze = implemented::Maze(mazeHeight, mazeWidth);
-	mazeObstacle = factory::createCube("maze-cube", colors.BLUE, colors.BLUE,
-	                                   colors.BLUE, colors.BLUE, colors.RED,
+	mazeObstacle = factory::createCube("maze-cube", colors.PURPLE, colors.PURPLE,
+	                                   colors.PURPLE, colors.PURPLE, colors.RED,
 	                                   colors.RED, colors.RED, colors.RED);
 
 	bulletMesh = new Mesh("bulletMesh");
@@ -82,7 +82,7 @@ void Game::InitEnemiesAttributes()
 	enemyHeadMesh = factory::createSolidHexagon("enemy-haed-mesh",
 										colors.DARK_RED, colors.MAGENTA);
 
-	float dist = 0.2f;
+	float dist = 0.4f;
 	float shrink = 0.5f;
 	enemyBodyScale = {0.2f, 0.65f, 0.1f};
 	enemyBodyScale *= shrink;
@@ -263,7 +263,8 @@ void Game::DrawEnemies(float deltaTimeSeconds)
 		++it;
 	}
 
-	enemyAngle += deltaTimeSeconds;
+	float enemySpeed = 5;
+	enemyAngle += deltaTimeSeconds * enemySpeed;
 	if (enemyAngle >= 2 * PI)
 		enemyAngle -= 2 * PI;
 	enemyDeltaHeight += enemySense ? deltaTimeSeconds : -deltaTimeSeconds;
@@ -495,7 +496,10 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 			position.x += sin(u) * deltaTime * cameraSpeed;
 			position.z += cos(u) * deltaTime * cameraSpeed;
 
-			SetThirdCamera();
+			if (firstCamera)
+				SetFirstCamera();
+			else
+				SetThirdCamera();
 		}
 	}
 
@@ -504,7 +508,10 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 			position.x -= sin(u) * deltaTime * cameraSpeed;
 			position.z -= cos(u) * deltaTime * cameraSpeed;
 
-			SetThirdCamera();
+			if (firstCamera)
+				SetFirstCamera();
+			else
+				SetThirdCamera();
 		}
 	}
 
@@ -514,7 +521,11 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 		du = u - du;
 		if (u < -2 * PI)
 			u += 2 * PI;
-		camera->RotateThirdPerson_OY(du);
+
+		if (firstCamera)
+			camera->RotateFirstPerson_OY(du);
+		else
+			camera->RotateThirdPerson_OY(du);
 	}
 
 	if (window->KeyHold(GLFW_KEY_D)) {
@@ -523,8 +534,14 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 		du = u - du;
 		if (u > 2 * PI)
 			u -= 2 * PI;
-		camera->RotateThirdPerson_OY(du);
+
+		if (firstCamera)
+			camera->RotateFirstPerson_OY(du);
+		else
+			camera->RotateThirdPerson_OY(du);
 	}
+
+	firstCamera = false;
 }
 
 void Game::UpdateEnemiesCollision(float deltaTimeSeconds)
@@ -543,18 +560,20 @@ void Game::UpdateEnemiesCollision(float deltaTimeSeconds)
 
 void Game::SetFirstCamera()
 {
-	float unit = 1.5f;
 	glm::vec3 cameraPos = this->position;
-	float dx = sin(u) * unit;
-	float dz = cos(u) * unit;
-	cameraPos.x += dx;
-	cameraPos.z += dz;
-	cameraPos.y += 0.5f;
+	cameraPos.y += 0.4f;
 
+	float playerDistance = 0.5f;
+	cameraPos.x += sin(u) * playerDistance;
+	cameraPos.z += cos(u) * playerDistance;
+
+	float centerDistance = 0.1f;
 	glm::vec3 center = cameraPos;
-	center += glm::vec3(sin(u) * 2 * unit, 0, cos(u) * 2 * unit);
+	center.x += centerDistance * sin(u);
+	center.z += centerDistance * cos(u);
+
 	camera->Set(cameraPos, center, {0, 1, 0});
-	camera->distanceToTarget = unit;
+	camera->distanceToTarget = centerDistance;
 }
 
 void Game::SetThirdCamera()
@@ -654,7 +673,8 @@ void Game::OnKeyRelease(int key, int mods)
 }
 
 
-void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY) {
+void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
+{
 }
 
 void Game::OnMouseBtnPress(int mouseX, int mouseY, int button, int mods)

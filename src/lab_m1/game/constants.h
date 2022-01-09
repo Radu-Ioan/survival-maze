@@ -13,7 +13,7 @@ namespace m1
 				RED(1.f, 0.f, 0.f),
 				GREEN(0.f, 1.f, 0.f),
 				BLUE(0.f, 0.f, 1.f),
-				PURPLE(1.f, 0.f, 1.f),
+				PURPLE(48.f / 255, 25.f / 255, 52.f / 255),
 				YELLOW(1.f, 1.f, 0.f),
 				DARK_RED(0.6f, 0.0f, 0.0f),
 				LIGHT_BLUE(0.6f, 1.f, 1.f),
