@@ -71,6 +71,7 @@ namespace m1
 		void DrawTime(float deltaTimeSeconds);
 		void DrawLife(float deltaTimeSeconds);
 
+		void UpdateEnemiesCollision(float deltaTimeSeconds);
 		/* for time and life */
 		void SetViewportArea(const ViewportSpace &viewSpace,
 							 glm::vec3 colorColor = glm::vec3(0),
@@ -151,11 +152,19 @@ namespace m1
 		/* time and life variables */
 		float timeRemaining;
 		float life;
+		float lifeUnit = 1;
+
 		LogicSpace logicSpace;
 		Mesh *digit0;
 
 		/* */
 		bool firstCamera;
+
+		/* for collisions */
+		float timeTangentWithEnemy;
+		// in case the player touches an enemy, if it remains like that, the
+		// life decreases
+		float limitForNextLifeDecrease;
 
 		// for a short debug on collisions
 		float quick_time_buffer = 0;

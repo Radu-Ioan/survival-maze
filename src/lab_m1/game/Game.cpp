@@ -73,6 +73,8 @@ void Game::InitPlayerAttributes()
 	headTranslate = {0.f, 0.9f, 0.f};
 
 	arrow = factory::createIndicator("arrow", colors.GREEN);
+
+	life = 12;
 }
 
 void Game::InitEnemiesAttributes()
@@ -81,20 +83,21 @@ void Game::InitEnemiesAttributes()
 	enemyHeadMesh = factory::createSolidHexagon("enemy-haed-mesh",
 												colors.DARK_RED, colors.MAGENTA);
 
+	float dist = 0.2f;
 	float shrink = 0.5f;
 	enemyBodyScale = {0.2f, 0.65f, 0.1f};
 	enemyBodyScale *= shrink;
-	enemyBodyTranslate = {0.f, 0.2f + 0.05, 0.f};
+	enemyBodyTranslate = {dist, 0.2f + 0.05, 0.f};
 
 	enemyLeftHandScale = {0.1f, 0.23f, 0.1f};
 	enemyLeftHandScale *= shrink;
 	enemyRightHandScale = enemyLeftHandScale;
 
-	enemyLeftHandTranslate = {0.2f, 0.23f, 0.f};
-	enemyRightHandTranslate = {-0.2f, 0.23f, 0.f};
+	enemyLeftHandTranslate = {0.2f + dist, 0.23f, 0.f};
+	enemyRightHandTranslate = {-0.2f + dist, 0.23f, 0.f};
 
 	enemyHeadScale = {0.1f, 0.125f, 0.1f};
-	enemyHeadTranslate = {0.f, 0.5f, 0.f};
+	enemyHeadTranslate = {dist, 0.5f, 0.f};
 
 	enemyAngle = 0.f;
 	enemyDeltaHeight = 0.f;
@@ -103,11 +106,15 @@ void Game::InitEnemiesAttributes()
 	// up
 	enemySense = true;
 	gameStart = true;
+
+	timeTangentWithEnemy = 0;
+	limitForNextLifeDecrease = 0.5f;
 }
 
 void Game::GenerateEnemies()
 {
-	int total = (int) emptyCells.size() / 5;
+//	int total = (int) emptyCells.size() / 5;
+	int total = (int) emptyCells.size();
 
 	for (int i = 0; i < total; i++) {
 		int idx = maze.randrange((int) emptyCells.size());
@@ -115,6 +122,7 @@ void Game::GenerateEnemies()
 		int x = emptyCells[idx].second;
 		enemies.push_back({x, z});
 		emptyCells.erase(emptyCells.begin() + idx);
+		maze.grid[z][x] = ENEMY_CELL;
 	}
 	gameStart = false;
 }
@@ -186,7 +194,7 @@ void Game::DrawMaze(float deltaTimeSeconds)
 	for (int row = 0; row < maze.H; row++) {
 		for (int col = 0; col < maze.W; col++) {
 			uint8_t field = maze.grid[row][col];
-			if (field > 0) {
+			if (field == WALL) {
 				glm::mat4 rendMatrix = glm::mat4(1);
 				rendMatrix = glm::translate(rendMatrix,
 											{2 * col, 0.f, 2 * row});
@@ -197,8 +205,10 @@ void Game::DrawMaze(float deltaTimeSeconds)
 				rendMatrix = glm::scale(rendMatrix, scaling);
 				RenderMesh(mazeObstacle, shaders["VertexColor"],
 						   rendMatrix);
-			} else if (!(row == maze.start.first && col == maze.start.second)
-					&& !(row == maze.end.first && col == maze.end.second)) {
+			} else if (!(col == maze.start.first && row == maze.start.second)
+			         && !(col == maze.end.first && row == maze.end.second)
+					 && !(row == maze.start.first && col == maze.start.second)
+					 && !(row == maze.end.first && col == maze.end.second)) {
 				emptyCells.push_back({row, col});
 			}
 		}
@@ -210,9 +220,10 @@ void Game::DrawEnemies(float deltaTimeSeconds)
 	if (gameStart)
 		GenerateEnemies();
 
-	for (auto &e : enemies) {
-		float dx = 2 * e.first + 1.f;
-		float dz = 2 * e.second + 1.f;
+	auto it = enemies.begin();
+	while (it != enemies.end()) {
+		float dx = 2 * (*it).first + 1.f;
+		float dz = 2 * (*it).second + 1.f;
 
 		/* body */
 		glm::mat4 modelMatrix = glm::mat4(1);
@@ -248,6 +259,8 @@ void Game::DrawEnemies(float deltaTimeSeconds)
 		modelMatrix = glm::translate(modelMatrix, enemyHeadTranslate);
 		modelMatrix = glm::scale(modelMatrix, enemyHeadScale);
 		RenderMesh(enemyHeadMesh, shaders["VertexColor"], modelMatrix);
+
+		++it;
 	}
 
 	enemyAngle += deltaTimeSeconds;
@@ -333,8 +346,20 @@ void Game::DrawBullets(float deltaTimeSeconds)
 		int marginX = ((int) floor(bullet.pos.x)) / 2;
 		int marginZ = ((int) floor(bullet.pos.z)) / 2;
 		if (marginX >= 0 && marginX < maze.W && marginZ >= 0
-				&& marginZ < maze.H && maze.grid[marginZ][marginX]) {
+					&& marginZ < maze.H && maze.grid[marginZ][marginX]) {
 			it = bullets.erase(it);
+			if (maze.grid[marginZ][marginX] == ENEMY_CELL) {
+				for (auto i = enemies.begin(); i != enemies.end(); ++i) {
+					auto item = *i;
+					int enemyX = item.first;
+					int enemyZ = item.second;
+					if (enemyX == marginX && enemyZ == marginZ) {
+						enemies.erase(i);
+						maze.grid[marginZ][marginX] = EMPTY_CELL;
+						break;
+					}
+				}
+			}
 		} else {
 			glm::mat4 modelMatrix = glm::mat4(1);
 			modelMatrix = glm::translate(modelMatrix, bullet.pos);
@@ -420,26 +445,43 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 {
 	float cameraSpeed = 2.0f;
 
+	float dx = position.x;
+	float dz = position.z;
+
 	if (window->KeyHold(GLFW_KEY_W)) {
 		if (AllowMove(deltaTime, cameraSpeed, FORWARD)) {
-			if (firstCamera) {
-				// todo
-
-			} else {
-				camera->MoveForward(deltaTime * cameraSpeed);
-				position = camera->GetTargetPosition();
-			}
+			position.x += sin(u) * deltaTime * cameraSpeed;
+			position.z += cos(u) * deltaTime * cameraSpeed;
+			dx = position.x - dx;
+			dz = position.z - dz;
+			camera->position.x += dx;
+			camera->position.z += dz;
+			camera->Set(camera->position, this->position, camera->up);
+//			if (firstCamera) {
+//				// todo
+//
+//			} else {
+//				camera->MoveForward(deltaTime * cameraSpeed);
+//				position = camera->GetTargetPosition();
+//			}
 		}
 	}
 
 	if (window->KeyHold(GLFW_KEY_S)) {
 		if (AllowMove(deltaTime, cameraSpeed, BACK)) {
-			if (window->KeyHold(GLFW_MOUSE_BUTTON_RIGHT)) {
-				// todo
-			} else {
-				camera->MoveForward(-deltaTime * cameraSpeed);
-				position = camera->GetTargetPosition();
-			}
+			position.x -= sin(u) * deltaTime * cameraSpeed;
+			position.z -= cos(u) * deltaTime * cameraSpeed;
+			dx = position.x - dx;
+			dz = position.z - dz;
+			camera->position.x += dx;
+			camera->position.z += dz;
+			camera->Set(camera->position, this->position, camera->up);
+//			if (window->KeyHold(GLFW_MOUSE_BUTTON_RIGHT)) {
+//				// todo
+//			} else {
+//				camera->MoveForward(-deltaTime * cameraSpeed);
+//				position = camera->GetTargetPosition();
+//			}
 		}
 	}
 
@@ -471,6 +513,20 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 		// [DONE]: Translate the camera upward
 		camera->TranslateUpward(deltaTime * cameraSpeed);
 		position = camera->GetTargetPosition();
+	}
+}
+
+void Game::UpdateEnemiesCollision(float deltaTimeSeconds)
+{
+	int x = ((int) floor(position.x)) / 2;
+	int z = ((int) floor(position.z)) / 2;
+	if (maze.grid[z][x] == ENEMY_CELL) {
+		if (timeTangentWithEnemy == 0)
+			life -= lifeUnit;
+
+		timeTangentWithEnemy += deltaTimeSeconds;
+		if (timeTangentWithEnemy >= limitForNextLifeDecrease)
+			timeTangentWithEnemy = 0;
 	}
 }
 
