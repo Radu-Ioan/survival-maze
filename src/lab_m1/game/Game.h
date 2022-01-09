@@ -72,6 +72,9 @@ namespace m1
 		void DrawLife(float deltaTimeSeconds);
 
 		void UpdateEnemiesCollision(float deltaTimeSeconds);
+		void SetThirdCamera();
+		void SetFirstCamera();
+
 		/* for time and life */
 		void SetViewportArea(const ViewportSpace &viewSpace,
 							 glm::vec3 colorColor = glm::vec3(0),
@@ -151,13 +154,12 @@ namespace m1
 
 		/* time and life variables */
 		float timeRemaining;
-		float life;
-		float lifeUnit = 1;
+		int life;
+		int lifeMax;
 
 		LogicSpace logicSpace;
 		Mesh *digit0;
 
-		/* */
 		bool firstCamera;
 
 		/* for collisions */

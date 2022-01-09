@@ -41,13 +41,6 @@ Mesh *factory::createCube(const std::string &name, glm::vec3 color)
 		0, 7, 4
 	};
 
-	// Mesh *mesh = new Mesh(name);
-	// mesh->InitFromData(vertices, indices);
-	// return mesh;
-
-	// verifica in labul 2 ce se intampla si vezi daca chiar mai e nevoie si de
-	// functia de mai jos
-	// Actually create the mesh from the data
 	return CreateMesh(name, vertices, indices);
 }
 
@@ -229,24 +222,24 @@ static Mesh *CreateMesh(const std::string &name,
 	const std::vector<unsigned int> &indices)
 {
 	unsigned int VAO = 0;
-	// [DONE]: Create the VAO and bind it
+	// Create the VAO and bind it
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
 	unsigned int VBO = 0;
-	// [DONE]: Create the VBO and bind it
+	// Create the VBO and bind it
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-	// [DONE]: Send vertices data into the VBO buffer
+	// Send vertices data into the VBO buffer
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * vertices.size(),
 		&vertices[0], GL_STATIC_DRAW);
 
 	unsigned int IBO = 0;
-	// [DONE]: Create the IBO and bind it
+	// Create the IBO and bind it
 	glGenBuffers(1, &IBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-	// [DONE]: Send indices data into the IBO buffer
+	// Send indices data into the IBO buffer
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices[0]) * indices.size(),
 		&indices[0], GL_STATIC_DRAW);
 
@@ -277,7 +270,7 @@ static Mesh *CreateMesh(const std::string &name,
 		(void*)(2 * sizeof(glm::vec3) + sizeof(glm::vec2)));
 	// ========================================================================
 
-	// [DONE](student): Unbind the VAO
+	// Unbind the VAO
 	glBindVertexArray(0);
 
 	// Check for OpenGL errors

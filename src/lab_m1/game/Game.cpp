@@ -4,7 +4,6 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include <stdio.h>
 
 #include "core/engine.h"
 #include "utils/gl_utils.h"
@@ -74,14 +73,14 @@ void Game::InitPlayerAttributes()
 
 	arrow = factory::createIndicator("arrow", colors.GREEN);
 
-	life = 12;
+	life = lifeMax = 12;
 }
 
 void Game::InitEnemiesAttributes()
 {
 	enemyBodyMesh = factory::createCube("enemy-mesh", colors.DARK_RED);
 	enemyHeadMesh = factory::createSolidHexagon("enemy-haed-mesh",
-												colors.DARK_RED, colors.MAGENTA);
+										colors.DARK_RED, colors.MAGENTA);
 
 	float dist = 0.2f;
 	float shrink = 0.5f;
@@ -113,8 +112,7 @@ void Game::InitEnemiesAttributes()
 
 void Game::GenerateEnemies()
 {
-//	int total = (int) emptyCells.size() / 5;
-	int total = (int) emptyCells.size();
+	int total = (int) emptyCells.size() / 4;
 
 	for (int i = 0; i < total; i++) {
 		int idx = maze.randrange((int) emptyCells.size());
@@ -169,13 +167,15 @@ void Game::Update(float deltaTimeSeconds)
 	DrawPlayer(deltaTimeSeconds);
 	DrawArrow(deltaTimeSeconds);
 	DrawBullets(deltaTimeSeconds);
-	DrawTime(deltaTimeSeconds);
+//	DrawTime(deltaTimeSeconds);
+	DrawLife(deltaTimeSeconds);
+
+	UpdateEnemiesCollision(deltaTimeSeconds);
 }
 
 void Game::FrameEnd()
 {
-//	DrawCoordinateSystem(camera->GetViewMatrix(), projectionMatrix);
-//	DrawCoordinateSystem();
+	DrawCoordinateSystem();
 }
 
 void Game::DrawPlane(float deltaTimeSeconds)
@@ -370,6 +370,48 @@ void Game::DrawBullets(float deltaTimeSeconds)
 	}
 }
 
+void Game::DrawTime(float deltaTimeSeconds)
+{
+	glm::ivec2 resolution = window->GetResolution();
+
+	auto viewSpace = ViewportSpace(0, resolution.y - resolution.y / 8,
+	                               resolution.x / 5, resolution.y / 16);
+	SetViewportArea(viewSpace, glm::vec3(0.5f), true);
+
+	auto visMatrix = glm::mat3(1);
+	visMatrix *= VisualizationTransf2DUnif(logicSpace, viewSpace);
+	auto modelMatrix = visMatrix * transform2D::Translate(0, 0);
+	RenderMesh2D(digit0, shaders["VertexColor"], modelMatrix);
+
+	timeRemaining -= deltaTimeSeconds;
+}
+
+void Game::DrawLife(float deltaTimeSeconds)
+{
+	glm::ivec2 resolution = window->GetResolution();
+	int xStart = 4;
+	int yStart = resolution.y - resolution.y / 16;
+	int width = resolution.x / 5;
+	int height = resolution.y / 16;
+
+	auto lifeFrame = ViewportSpace(xStart, yStart, width, height);
+	SetViewportArea(lifeFrame, colors.BLACK, true);
+
+	int thickness = 4;
+	int displayUnit = width / lifeMax;
+
+	if (width - 2 * thickness - displayUnit * (lifeMax - life) > 0) {
+		auto lifeContent = ViewportSpace(xStart + thickness,
+		                                 yStart + thickness,
+		                                 width - 2 * thickness
+										    - displayUnit * (lifeMax - life),
+		                                 resolution.y / 16 - 2 * thickness);
+		SetViewportArea(lifeContent, colors.GREEN, true);
+	} else {
+		cout << "GAME OVER" << endl;
+	}
+}
+
 void Game::RenderMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix)
 {
 	if (!mesh || !shader || !shader->program)
@@ -445,25 +487,15 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 {
 	float cameraSpeed = 2.0f;
 
-	float dx = position.x;
-	float dz = position.z;
+	if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT))
+		firstCamera = true;
 
 	if (window->KeyHold(GLFW_KEY_W)) {
 		if (AllowMove(deltaTime, cameraSpeed, FORWARD)) {
 			position.x += sin(u) * deltaTime * cameraSpeed;
 			position.z += cos(u) * deltaTime * cameraSpeed;
-			dx = position.x - dx;
-			dz = position.z - dz;
-			camera->position.x += dx;
-			camera->position.z += dz;
-			camera->Set(camera->position, this->position, camera->up);
-//			if (firstCamera) {
-//				// todo
-//
-//			} else {
-//				camera->MoveForward(deltaTime * cameraSpeed);
-//				position = camera->GetTargetPosition();
-//			}
+
+			SetThirdCamera();
 		}
 	}
 
@@ -471,17 +503,8 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 		if (AllowMove(deltaTime, cameraSpeed, BACK)) {
 			position.x -= sin(u) * deltaTime * cameraSpeed;
 			position.z -= cos(u) * deltaTime * cameraSpeed;
-			dx = position.x - dx;
-			dz = position.z - dz;
-			camera->position.x += dx;
-			camera->position.z += dz;
-			camera->Set(camera->position, this->position, camera->up);
-//			if (window->KeyHold(GLFW_MOUSE_BUTTON_RIGHT)) {
-//				// todo
-//			} else {
-//				camera->MoveForward(-deltaTime * cameraSpeed);
-//				position = camera->GetTargetPosition();
-//			}
+
+			SetThirdCamera();
 		}
 	}
 
@@ -502,18 +525,6 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 			u -= 2 * PI;
 		camera->RotateThirdPerson_OY(du);
 	}
-
-	/* voi scoate si if-urile astea, ele raman acum doar pentru debug */
-	if (window->KeyHold(GLFW_KEY_Q)) {
-		// [DONE]: Translate the camera downward
-		camera->TranslateUpward(-deltaTime * cameraSpeed);
-	}
-
-	if (window->KeyHold(GLFW_KEY_E)) {
-		// [DONE]: Translate the camera upward
-		camera->TranslateUpward(deltaTime * cameraSpeed);
-		position = camera->GetTargetPosition();
-	}
 }
 
 void Game::UpdateEnemiesCollision(float deltaTimeSeconds)
@@ -522,7 +533,7 @@ void Game::UpdateEnemiesCollision(float deltaTimeSeconds)
 	int z = ((int) floor(position.z)) / 2;
 	if (maze.grid[z][x] == ENEMY_CELL) {
 		if (timeTangentWithEnemy == 0)
-			life -= lifeUnit;
+			--life;
 
 		timeTangentWithEnemy += deltaTimeSeconds;
 		if (timeTangentWithEnemy >= limitForNextLifeDecrease)
@@ -530,29 +541,36 @@ void Game::UpdateEnemiesCollision(float deltaTimeSeconds)
 	}
 }
 
-void Game::DrawTime(float deltaTimeSeconds)
+void Game::SetFirstCamera()
 {
-	glm::ivec2 resolution = window->GetResolution();
+	float unit = 1.5f;
+	glm::vec3 cameraPos = this->position;
+	float dx = sin(u) * unit;
+	float dz = cos(u) * unit;
+	cameraPos.x += dx;
+	cameraPos.z += dz;
+	cameraPos.y += 0.5f;
 
-	auto viewSpace = ViewportSpace(0, resolution.y - resolution.y / 8,
-								   resolution.x / 5, resolution.y / 16);
-	SetViewportArea(viewSpace, glm::vec3(0.5f), true);
-
-	auto visMatrix = glm::mat3(1);
-	visMatrix *= VisualizationTransf2DUnif(logicSpace, viewSpace);
-	auto modelMatrix = visMatrix * transform2D::Translate(0, 0);
-	RenderMesh2D(digit0, shaders["VertexColor"], modelMatrix);
-
-	timeRemaining -= deltaTimeSeconds;
+	glm::vec3 center = cameraPos;
+	center += glm::vec3(sin(u) * 2 * unit, 0, cos(u) * 2 * unit);
+	camera->Set(cameraPos, center, {0, 1, 0});
+	camera->distanceToTarget = unit;
 }
 
-void Game::DrawLife(float deltaTimeSeconds)
+void Game::SetThirdCamera()
 {
-	glm::ivec2 resolution = window->GetResolution();
+	glm::vec3 cameraPos = this->position;
+	float dy = 4.f;
+	float dz = 8.f;
+	cameraPos.y += dy;
+	cameraPos.z -= dz;
+	camera->Set(cameraPos, this->position, {0.f, 1.f, 0.5f});
+	camera->distanceToTarget = (float) sqrt(dy * dy + dz * dz);
 
-	auto viewSpace = ViewportSpace(0, resolution.y - resolution.y / 16,
-	                               resolution.x / 5, resolution.y / 16);
-	SetViewportArea(viewSpace, glm::vec3(0.3f), true);
+	camera->RotateThirdPerson_OY(u);
+
+	projectionMatrix = glm::perspective(RADIANS(60),
+						window->props.aspectRatio, 0.01f, 200.0f);
 }
 
 void Game::SetViewportArea(const ViewportSpace &viewSpace,
@@ -612,32 +630,6 @@ glm::mat3 Game::VisualizationTransf2DUnif(const LogicSpace &logicSpace,
 			0.0f, 0.0f, 1.0f));
 }
 
-void deprecatedMovement()
-{
-	/* if w is pressed */
-//		float v = u + PI/2;
-//		float dx = position.x;
-//		float dz = position.z;
-//		position.x -= sin(u) * deltaTime * cameraSpeed;
-//		position.z -= cos(u) * deltaTime * cameraSpeed;
-//		dx = position.x - dx;
-//		dz = position.z - dz;
-//		camera->position.x += dx;
-//		camera->position.z += dz;
-//		camera->Set(camera->position, this->position, camera->up);
-	/* if s is pressed */
-//		float v = u + PI/2;
-//		float dx = position.x;
-//		float dz = position.z;
-//		position.x += sin(u) * deltaTime * cameraSpeed;
-//		position.z += cos(u) * deltaTime * cameraSpeed;
-//		dx = position.x - dx;
-//		dz = position.z - dz;
-//		camera->position.x += dx;
-//		camera->position.z += dz;
-//		camera->Set(camera->position, this->position, camera->up);
-}
-
 void Game::OnKeyPress(int key, int mods)
 {
 	if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
@@ -661,21 +653,8 @@ void Game::OnKeyRelease(int key, int mods)
 	// Add key release event
 }
 
-/**
- * Va fi scoasa aceasta functie.
- */
+
 void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY) {
-	// Add mouse move event
-//	float sensivityOX = 0.001f;
-//	float sensivityOY = 0.001f;
-//
-//	if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
-//		// [DONE]: Rotate the camera in third-person mode around
-//		// OX and OY using `deltaX` and `deltaY`. Use the sensitivity
-//		// variables for setting up the rotation speed.
-//		camera->RotateThirdPerson_OX(-deltaY * sensivityOY);
-//		camera->RotateThirdPerson_OY(-deltaX * sensivityOX);
-//	}
 }
 
 void Game::OnMouseBtnPress(int mouseX, int mouseY, int button, int mods)
