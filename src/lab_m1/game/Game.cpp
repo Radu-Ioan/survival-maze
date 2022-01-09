@@ -406,7 +406,7 @@ void Game::DrawLife(float deltaTimeSeconds)
 		                                 width - 2 * thickness
 										    - displayUnit * (lifeMax - life),
 		                                 resolution.y / 16 - 2 * thickness);
-		SetViewportArea(lifeContent, colors.GREEN, true);
+		SetViewportArea(lifeContent, colors.CYAN, true);
 	} else {
 		cout << "GAME OVER" << endl;
 	}
