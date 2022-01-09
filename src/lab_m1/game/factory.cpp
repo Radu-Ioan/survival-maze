@@ -105,23 +105,23 @@ Mesh *factory::createIndicator(const std::string &name, glm::vec3 color)
 	return CreateMesh(name, vertices, indices);
 }
 
-Mesh *factory::createSolidHexagon(const std::string &name, glm::vec3 color)
+Mesh *factory::createSolidHexagon(const std::string &name, glm::vec3 color1, glm::vec3 color2)
 {
 	std::vector<VertexFormat> vertices
 	{
-		VertexFormat(glm::vec3(-1, 0, 1), color),
-		VertexFormat(glm::vec3(-0.5f, -1, 1), color),
-		VertexFormat(glm::vec3(0.5f, -1, 1), color),
-		VertexFormat(glm::vec3(1, 0, 1), color),
-		VertexFormat(glm::vec3(0.5f, 1, 1), color),
-		VertexFormat(glm::vec3(-0.5f, 1, 1), color),
+		VertexFormat(glm::vec3(-1, 0, 1), color1),
+		VertexFormat(glm::vec3(-0.5f, -1, 1), color1),
+		VertexFormat(glm::vec3(0.5f, -1, 1), color2),
+		VertexFormat(glm::vec3(1, 0, 1), color1),
+		VertexFormat(glm::vec3(0.5f, 1, 1), color1),
+		VertexFormat(glm::vec3(-0.5f, 1, 1), color2),
 
-		VertexFormat(glm::vec3(-1, 0, -1), color),
-		VertexFormat(glm::vec3(-0.5f, -1, -1), color),
-		VertexFormat(glm::vec3(0.5f, -1, -1), color),
-		VertexFormat(glm::vec3(1, 0, -1), color),
-		VertexFormat(glm::vec3(0.5f, 1, -1), color),
-		VertexFormat(glm::vec3(-0.5f, 1, -1), color),
+		VertexFormat(glm::vec3(-1, 0, -1), color1),
+		VertexFormat(glm::vec3(-0.5f, -1, -1), color2),
+		VertexFormat(glm::vec3(0.5f, -1, -1), color2),
+		VertexFormat(glm::vec3(1, 0, -1), color1),
+		VertexFormat(glm::vec3(0.5f, 1, -1), color2),
+		VertexFormat(glm::vec3(-0.5f, 1, -1), color2),
 	};
 
 	std::vector<unsigned int> indices

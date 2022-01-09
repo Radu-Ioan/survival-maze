@@ -60,7 +60,7 @@ namespace m1
 
 		void InitPlayerAttributes();
 		void InitEnemiesAttributes();
-		void generateEnemies();
+		void GenerateEnemies();
 
 		void DrawPlane(float deltaTimeSeconds);
 		void DrawMaze(float deltaTimeSeconds);
@@ -81,8 +81,8 @@ namespace m1
 											const ViewportSpace &viewSpace);
 
 		/* for collisions */
-		bool allowMove(float deltaTime, float cameraSpeed,
-					   Direction direction);
+		bool AllowMove(float deltaTime, float cameraSpeed,
+		               Direction direction);
 
 		void RenderMesh(Mesh *mesh, Shader *shader,
 			const glm::mat4 &modelMatrix) override;
@@ -150,6 +150,7 @@ namespace m1
 
 		/* time and life variables */
 		float timeRemaining;
+		float life;
 		LogicSpace logicSpace;
 		Mesh *digit0;
 

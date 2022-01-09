@@ -15,7 +15,7 @@ namespace factory
 	                 glm::vec3 v6Color, glm::vec3 v7Color,
 	                 glm::vec3 v8Color);
 	Mesh *createIndicator(const std::string &name, glm::vec3 color);
-	Mesh *createSolidHexagon(const std::string &name, glm::vec3 color);
+	Mesh *createSolidHexagon(const std::string &name, glm::vec3 color1, glm::vec3 color2);
 
 	Mesh *createDigit0(glm::vec3 color);
 	Mesh *createDigit1(glm::vec3 color);

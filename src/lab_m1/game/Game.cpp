@@ -79,22 +79,22 @@ void Game::InitEnemiesAttributes()
 {
 	enemyBodyMesh = factory::createCube("enemy-mesh", colors.DARK_RED);
 	enemyHeadMesh = factory::createSolidHexagon("enemy-haed-mesh",
-												colors.DARK_RED);
+												colors.DARK_RED, colors.MAGENTA);
 
 	float shrink = 0.5f;
 	enemyBodyScale = {0.2f, 0.65f, 0.1f};
 	enemyBodyScale *= shrink;
-	enemyBodyTranslate = {0.4f, 0.65f / 2 + 0.05, 0.5f};
+	enemyBodyTranslate = {0.f, 0.2f + 0.05, 0.f};
 
 	enemyLeftHandScale = {0.1f, 0.23f, 0.1f};
 	enemyLeftHandScale *= shrink;
 	enemyRightHandScale = enemyLeftHandScale;
 
-	enemyLeftHandTranslate = {0.05f + 0.1f, 0.53f, 0.5f};
-	enemyRightHandTranslate = {0.05f + 0.73f, 0.53f, 0.5f};
+	enemyLeftHandTranslate = {0.2f, 0.23f, 0.f};
+	enemyRightHandTranslate = {-0.2f, 0.23f, 0.f};
 
-	enemyHeadScale = {0.6f, 0.4f, 0.3f};
-	enemyHeadTranslate = {0.5f, 0.8f, 0.5f};
+	enemyHeadScale = {0.1f, 0.125f, 0.1f};
+	enemyHeadTranslate = {0.f, 0.5f, 0.f};
 
 	enemyAngle = 0.f;
 	enemyDeltaHeight = 0.f;
@@ -105,10 +105,10 @@ void Game::InitEnemiesAttributes()
 	gameStart = true;
 }
 
-void Game::generateEnemies()
+void Game::GenerateEnemies()
 {
-	// int total = (int) emptyCells.size() / 20;
-	int total = 10;
+	int total = (int) emptyCells.size() / 5;
+
 	for (int i = 0; i < total; i++) {
 		int idx = maze.randrange((int) emptyCells.size());
 		int z = emptyCells[idx].first;
@@ -208,18 +208,46 @@ void Game::DrawMaze(float deltaTimeSeconds)
 void Game::DrawEnemies(float deltaTimeSeconds)
 {
 	if (gameStart)
-		generateEnemies();
+		GenerateEnemies();
 
 	for (auto &e : enemies) {
-		float dx = 2 * e.first + 0.5f;
-		float dz = 2 * e.second + 0.5f;
+		float dx = 2 * e.first + 1.f;
+		float dz = 2 * e.second + 1.f;
+
+		/* body */
 		glm::mat4 modelMatrix = glm::mat4(1);
 		modelMatrix = glm::translate(modelMatrix,
-					glm::vec3(dx, enemyDeltaHeight, dz));
-		modelMatrix = glm::translate(modelMatrix, enemyBodyTranslate);
+									 glm::vec3(dx, enemyDeltaHeight, dz));
 		modelMatrix = glm::rotate(modelMatrix, enemyAngle, glm::vec3(0, 1, 0));
+		modelMatrix = glm::translate(modelMatrix, enemyBodyTranslate);
 		modelMatrix = glm::scale(modelMatrix, enemyBodyScale);
 		RenderMesh(enemyBodyMesh, shaders["VertexColor"], modelMatrix);
+
+		/* left hand */
+		modelMatrix = glm::mat4(1);
+		modelMatrix = glm::translate(modelMatrix,
+									 glm::vec3(dx, enemyDeltaHeight, dz));
+		modelMatrix = glm::rotate(modelMatrix, enemyAngle, glm::vec3(0, 1, 0));
+		modelMatrix = glm::translate(modelMatrix, enemyLeftHandTranslate);
+		modelMatrix = glm::scale(modelMatrix, enemyLeftHandScale);
+		RenderMesh(enemyBodyMesh, shaders["VertexColor"], modelMatrix);
+
+		/* right hand */
+		modelMatrix = glm::mat4(1);
+		modelMatrix = glm::translate(modelMatrix,
+		                             glm::vec3(dx, enemyDeltaHeight, dz));
+		modelMatrix = glm::rotate(modelMatrix, enemyAngle, glm::vec3(0, 1, 0));
+		modelMatrix = glm::translate(modelMatrix, enemyRightHandTranslate);
+		modelMatrix = glm::scale(modelMatrix, enemyRightHandScale);
+		RenderMesh(enemyBodyMesh, shaders["VertexColor"], modelMatrix);
+
+		/* head */
+		modelMatrix = glm::mat4(1);
+		modelMatrix = glm::translate(modelMatrix, glm::vec3(dx, enemyDeltaHeight, dz));
+		modelMatrix = glm::rotate(modelMatrix, enemyAngle, glm::vec3(0, 1, 0));
+		modelMatrix = glm::translate(modelMatrix, enemyHeadTranslate);
+		modelMatrix = glm::scale(modelMatrix, enemyHeadScale);
+		RenderMesh(enemyHeadMesh, shaders["VertexColor"], modelMatrix);
 	}
 
 	enemyAngle += deltaTimeSeconds;
@@ -334,7 +362,7 @@ void Game::RenderMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix)
 	mesh->Render();
 }
 
-bool Game::allowMove(float deltaTime, float cameraSpeed, Direction direction)
+bool Game::AllowMove(float deltaTime, float cameraSpeed, Direction direction)
 {
 	glm::vec3 playerForward{sin(u), 0, cos(u)};
 	playerForward = glm::normalize(playerForward);
@@ -393,7 +421,7 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 	float cameraSpeed = 2.0f;
 
 	if (window->KeyHold(GLFW_KEY_W)) {
-		if (allowMove(deltaTime, cameraSpeed, FORWARD)) {
+		if (AllowMove(deltaTime, cameraSpeed, FORWARD)) {
 			if (firstCamera) {
 				// todo
 
@@ -405,7 +433,7 @@ void Game::OnInputUpdate(float deltaTime, int mods)
 	}
 
 	if (window->KeyHold(GLFW_KEY_S)) {
-		if (allowMove(deltaTime, cameraSpeed, BACK)) {
+		if (AllowMove(deltaTime, cameraSpeed, BACK)) {
 			if (window->KeyHold(GLFW_MOUSE_BUTTON_RIGHT)) {
 				// todo
 			} else {
